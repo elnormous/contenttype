@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestGetContentType(t *testing.T) {
+func TestGetMediaType(t *testing.T) {
 	tables := []struct {
 		header string
 		result string
@@ -27,7 +27,7 @@ func TestGetContentType(t *testing.T) {
 		if len(table.header) > 0 {
 			request.Header.Set("Content-Type", table.header)
 		}
-		result, err := GetContentType(request)
+		result, err := GetMediaType(request)
 		if table.err != nil {
 			if err == nil {
 				t.Errorf("Expected an error")

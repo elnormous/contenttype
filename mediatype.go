@@ -8,7 +8,7 @@ import (
 
 var InvalidContentTypeError = errors.New("Invalid content type")
 
-func GetContentType(request *http.Request) (string, error) {
+func GetMediaType(request *http.Request) (string, error) {
 	values := request.Header.Values("Content-Type")
 
 	if len(values) == 0 {
