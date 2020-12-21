@@ -1,4 +1,4 @@
-package mediatype
+package contenttype
 
 import (
 	"log"

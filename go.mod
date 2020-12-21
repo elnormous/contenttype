@@ -1,3 +1,3 @@
-module github.com/elnormous/mediatype
+module github.com/elnormous/contenttype
 
 go 1.12
