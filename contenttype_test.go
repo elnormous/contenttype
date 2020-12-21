@@ -16,6 +16,8 @@ func TestGetMediaType(t *testing.T) {
 		{"application/json", "application/json", nil},
 		{"*/*", "", InvalidContentTypeError},
 		{"Application/JSON", "application/json", nil},
+		{"Application", "", InvalidContentTypeError},
+		{"Application/JSON/test", "", InvalidContentTypeError},
 	}
 
 	for _, table := range tables {
