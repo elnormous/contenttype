@@ -17,14 +17,11 @@ func TestGetMediaType(t *testing.T) {
 	}{
 		{"", "", map[string]string{}, nil},
 		{"application/json", "application/json", map[string]string{}, nil},
-		{"*/*", "", nil, InvalidContentTypeError},
+		{"*/*", "*/*", map[string]string{}, nil},
 		{"Application/JSON", "application/json", map[string]string{}, nil},
 		{"Application", "", nil, InvalidContentTypeError},
 		{"Application/JSON/test", "", nil, InvalidContentTypeError},
 		{" application/json ", "application/json", map[string]string{}, nil},
-		// {"Application/XML;charset=utf-8", "application/xml", map[string]string{
-		// 	"charset": "utf-8",
-		// }, nil},
 	}
 
 	for _, table := range tables {

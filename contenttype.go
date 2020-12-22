@@ -2,9 +2,9 @@ package contenttype
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strings"
-	"unicode"
 )
 
 var InvalidContentTypeError = errors.New("Invalid content type")
@@ -28,36 +28,48 @@ func isToken(s string) bool {
 	return strings.IndexFunc(s, isNotTokenChar) == -1
 }
 
-func GetMediaType(request *http.Request) (string, map[string]string, error) {
-	values := request.Header.Values("Content-Type")
+func isWhiteSpaceChar(r rune) bool {
+	// RFC 7230, 3.2.3. Whitespace
+	return r == 0x09 || r == 0x20
+}
 
-	if len(values) == 0 {
+func GetMediaType(request *http.Request) (string, map[string]string, error) {
+	contentTypes := request.Header.Values("Content-Type")
+
+	if len(contentTypes) == 0 {
 		return "", map[string]string{}, nil
 	}
 
-	value := values[0]
+	contentType := strings.TrimFunc(contentTypes[0], isWhiteSpaceChar)
 
-	if value == "*/*" {
-		return "", nil, InvalidContentTypeError
-	}
-
-	slashIndex := strings.IndexByte(value, '/')
+	slashIndex := strings.Index(contentType, "/")
 	if slashIndex == -1 {
 		return "", nil, InvalidContentTypeError
 	}
 
 	parameters := make(map[string]string)
 
-	endIndex := strings.Index(value, ";")
+	endIndex := strings.Index(contentType, ";")
 	if endIndex == -1 {
-		endIndex = len(value)
+		endIndex = len(contentType)
 	} else {
-		// TODO: parse parameters in while loop
+		parameterIndex := endIndex
+		parameterString := contentType
+
+		for parameterIndex != -1 {
+			parameterString := parameterString[parameterIndex+1:]
+
+			equalIndex := strings.Index(contentType, "=")
+			key := contentType[:equalIndex]
+			log.Println(key)
+
+			parameterIndex = strings.Index(parameterString, "/")
+		}
 	}
 
 	var stringBuilder strings.Builder
-	supertype := strings.TrimLeftFunc(value[:slashIndex], unicode.IsSpace)
-	subtype := strings.TrimRightFunc(value[slashIndex+1:endIndex], unicode.IsSpace)
+	supertype := contentType[:slashIndex]
+	subtype := contentType[slashIndex+1 : endIndex]
 
 	if !isToken(supertype) || !isToken(subtype) {
 		return "", nil, InvalidContentTypeError
