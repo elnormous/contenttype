@@ -176,7 +176,7 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 			}
 		}
 
-		parameters[key] = value
+		parameters[strings.ToLower(key)] = strings.ToLower(value)
 
 		s = skipWhiteSpaces(s)
 	}

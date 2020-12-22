@@ -33,6 +33,7 @@ func TestGetMediaType(t *testing.T) {
 		{"application/xml;foo=\"\" ", "application/xml", map[string]string{"foo": ""}, nil},
 		{"application/xml;foo=\"\\\"b\" ", "application/xml", map[string]string{"foo": "\"b"}, nil},
 		{"a/b+c;a=b;c=d", "a/b+c", map[string]string{"a": "b", "c": "d"}, nil},
+		{"a/b;A=B", "a/b", map[string]string{"a": "b"}, nil},
 	}
 
 	for _, table := range tables {
