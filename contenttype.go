@@ -9,9 +9,15 @@ import (
 var InvalidContentTypeError = errors.New("Invalid content type")
 var InvalidParameterError = errors.New("Invalid parameter")
 
+func isWhiteSpaceChar(r rune) bool {
+	// RFC 7230, 3.2.3. Whitespace
+	return r == 0x09 || r == 0x20 // HTAB or SP
+}
+
 func isTokenChar(r rune) bool {
 	// RFC 7230, 3.2.6. Field Value Components
 	return strings.ContainsRune("!#$%&'*+-.^_`|~", r) ||
+		// RFC 5234, Appendix B.1. Core Rules
 		(r >= 0x30 && r <= 0x39) || // DIGIT
 		(r >= 0x41 && r <= 0x5A) || (r >= 0x61 && r <= 0x7A) // ALPHA
 }
@@ -20,18 +26,69 @@ func isNotTokenChar(r rune) bool {
 	return !isTokenChar(r)
 }
 
-func consumeToken(s string) (token, remaining string) {
+func isVisibleChar(r rune) bool {
+	// RFC 5234, Appendix B.1. Core Rules
+	return r >= 0x21 && r <= 0x7E
+}
+
+func isObsoleteTextChar(r rune) bool {
+	// RFC 7230, 3.2.6. Field Value Components
+	return r >= 0x80 && r <= 0xFF
+}
+
+func isQuotedTextChar(r rune) bool {
+	// RFC 7230, 3.2.6. Field Value Components
+	return r == 0x09 || r == 0x20 || // HTAB or SP
+		r == 0x21 ||
+		(r >= 0x23 && r <= 0x5B) ||
+		(r >= 0x5D && r <= 0x7E) ||
+		isObsoleteTextChar(r)
+}
+
+func isQuotedPairChar(r rune) bool {
+	// RFC 7230, 3.2.6. Field Value Components
+	return r == 0x09 || r == 0x20 || // HTAB or SP
+		isVisibleChar(r) ||
+		isObsoleteTextChar(r)
+}
+
+func consumeToken(s string) (token, remaining string, consumed bool) {
 	index := strings.IndexFunc(s, isNotTokenChar)
 	if index == -1 {
-		return s, ""
+		return s, "", len(s) > 0
 	} else {
-		return s[:index], s[index:]
+		return s[:index], s[index:], index > 0
 	}
 }
 
-func isWhiteSpaceChar(r rune) bool {
-	// RFC 7230, 3.2.3. Whitespace
-	return r == 0x09 || r == 0x20 // HTAB or SP
+func consumeQuotedString(s string) (token, remaining string, consumed bool) {
+	if len(s) == 0 || s[0] != '"' {
+		return "", s, false
+	}
+
+	var stringBuilder strings.Builder
+
+	for index := 1; index < len(s); index++ {
+		if s[index] == '"' {
+			return stringBuilder.String(), s[index+1:], true
+		}
+
+		if s[index] == '\\' {
+			index++
+			if len(s) <= index || !isQuotedPairChar(rune(s[index])) {
+				return "", s, false
+			}
+
+			stringBuilder.WriteByte(s[index])
+		} else {
+			if !isQuotedTextChar(rune(s[index])) {
+				return "", s, false
+			}
+			stringBuilder.WriteByte(s[index])
+		}
+	}
+
+	return "", s, false
 }
 
 func skipWhiteSpaces(s string) string {
@@ -47,10 +104,10 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 
 	s := skipWhiteSpaces(contentTypes[0])
 
+	var ok bool
 	var supertype string
-	supertype, s = consumeToken(s)
-
-	if len(supertype) == 0 {
+	supertype, s, ok = consumeToken(s)
+	if !ok {
 		return "", nil, InvalidContentTypeError
 	}
 
@@ -61,9 +118,8 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 	s = s[1:] // skip the slash
 
 	var subtype string
-	subtype, s = consumeToken(s)
-
-	if len(subtype) == 0 {
+	subtype, s, ok = consumeToken(s)
+	if !ok {
 		return "", nil, InvalidContentTypeError
 	}
 
@@ -80,15 +136,31 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 		s = skipWhiteSpaces(s)
 
 		var key string
-		key, s = consumeToken(s)
+		key, s, ok = consumeToken(s)
+		if !ok {
+			return "", nil, InvalidParameterError
+		}
 
 		if len(s) == 0 || s[0] != '=' {
 			return "", nil, InvalidParameterError
 		}
 
 		s = s[1:] // skip the equal sign
+
 		var value string
-		value, s = consumeToken(s)
+		if len(s) != 0 && s[0] == '"' { // opening quote
+			value, s, ok = consumeQuotedString(s)
+
+			if !ok {
+				return "", nil, InvalidParameterError
+			}
+
+		} else {
+			value, s, ok = consumeToken(s)
+			if !ok {
+				return "", nil, InvalidParameterError
+			}
+		}
 
 		parameters[key] = value
 

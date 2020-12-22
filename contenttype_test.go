@@ -20,11 +20,19 @@ func TestGetMediaType(t *testing.T) {
 		{"*/*", "*/*", map[string]string{}, nil},
 		{"Application/JSON", "application/json", map[string]string{}, nil},
 		{"Application", "", nil, InvalidContentTypeError},
+		{"/Application", "", nil, InvalidContentTypeError},
 		{"Application/JSON/test", "", nil, InvalidParameterError},
 		{" application/json ", "application/json", map[string]string{}, nil},
 		{"Application/XML;charset=utf-8", "application/xml", map[string]string{"charset": "utf-8"}, nil},
-		{"Application/XML;foo=bar ", "application/xml", map[string]string{"foo": "bar"}, nil},
-		{"Application/XML ; foo=bar ", "application/xml", map[string]string{"foo": "bar"}, nil},
+		{"application/xml;foo=bar ", "application/xml", map[string]string{"foo": "bar"}, nil},
+		{"application/xml ; foo=bar ", "application/xml", map[string]string{"foo": "bar"}, nil},
+		{"application/xml;=bar ", "", nil, InvalidParameterError},
+		{"application/xml; =bar ", "", nil, InvalidParameterError},
+		{"application/xml;foo= ", "", nil, InvalidParameterError},
+		{"application/xml;foo=\"bar\" ", "application/xml", map[string]string{"foo": "bar"}, nil},
+		{"application/xml;foo=\"\" ", "application/xml", map[string]string{"foo": ""}, nil},
+		{"application/xml;foo=\"\\\"b\" ", "application/xml", map[string]string{"foo": "\"b"}, nil},
+		{"a/b+c;a=b;c=d", "a/b+c", map[string]string{"a": "b", "c": "d"}, nil},
 	}
 
 	for _, table := range tables {
