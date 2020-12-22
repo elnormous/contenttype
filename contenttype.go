@@ -41,14 +41,14 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 
 	contentType := strings.TrimFunc(contentTypes[0], isWhiteSpaceChar)
 
-	slashIndex := strings.Index(contentType, "/")
+	slashIndex := strings.IndexRune(contentType, '/')
 	if slashIndex == -1 {
 		return "", nil, InvalidContentTypeError
 	}
 
 	parameters := make(map[string]string)
 
-	endIndex := strings.Index(contentType, ";")
+	endIndex := strings.IndexRune(contentType, ';')
 	if endIndex == -1 {
 		endIndex = len(contentType)
 	} else {
@@ -58,11 +58,11 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 		for parameterIndex != -1 {
 			parameterString := parameterString[parameterIndex+1:]
 
-			equalIndex := strings.Index(contentType, "=")
+			equalIndex := strings.IndexRune(contentType, '=')
 			key := contentType[:equalIndex]
 			log.Println(key)
 
-			parameterIndex = strings.Index(parameterString, "/")
+			parameterIndex = strings.IndexRune(parameterString, ';')
 		}
 	}
 
