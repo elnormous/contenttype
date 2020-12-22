@@ -9,56 +9,63 @@ import (
 var InvalidContentTypeError = errors.New("Invalid content type")
 var InvalidParameterError = errors.New("Invalid parameter")
 
-func isWhiteSpaceChar(r rune) bool {
+func isWhiteSpaceChar(c byte) bool {
 	// RFC 7230, 3.2.3. Whitespace
-	return r == 0x09 || r == 0x20 // HTAB or SP
+	return c == 0x09 || c == 0x20 // HTAB or SP
 }
 
-func isTokenChar(r rune) bool {
-	// RFC 7230, 3.2.6. Field Value Components
-	return strings.ContainsRune("!#$%&'*+-.^_`|~", r) ||
-		// RFC 5234, Appendix B.1. Core Rules
-		(r >= 0x30 && r <= 0x39) || // DIGIT
-		(r >= 0x41 && r <= 0x5A) || (r >= 0x61 && r <= 0x7A) // ALPHA
-}
-
-func isNotTokenChar(r rune) bool {
-	return !isTokenChar(r)
-}
-
-func isVisibleChar(r rune) bool {
+func isDigitChar(c byte) bool {
 	// RFC 5234, Appendix B.1. Core Rules
-	return r >= 0x21 && r <= 0x7E
+	return c >= 0x30 && c <= 0x39
 }
 
-func isObsoleteTextChar(r rune) bool {
-	// RFC 7230, 3.2.6. Field Value Components
-	return r >= 0x80 && r <= 0xFF
+func isAlphaChar(c byte) bool {
+	// RFC 5234, Appendix B.1. Core Rules
+	return (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A)
 }
 
-func isQuotedTextChar(r rune) bool {
+func isTokenChar(c byte) bool {
 	// RFC 7230, 3.2.6. Field Value Components
-	return r == 0x09 || r == 0x20 || // HTAB or SP
-		r == 0x21 ||
-		(r >= 0x23 && r <= 0x5B) ||
-		(r >= 0x5D && r <= 0x7E) ||
-		isObsoleteTextChar(r)
+	return c == '!' || c == '#' || c == '$' || c == '%' || c == '&' || c == '\'' || c == '*' ||
+		c == '+' || c == '-' || c == '.' || c == '^' || c == '_' || c == '`' || c == '|' || c == '~' ||
+		isDigitChar(c) ||
+		isAlphaChar(c)
 }
 
-func isQuotedPairChar(r rune) bool {
+func isVisibleChar(c byte) bool {
+	// RFC 5234, Appendix B.1. Core Rules
+	return c >= 0x21 && c <= 0x7E
+}
+
+func isObsoleteTextChar(c byte) bool {
 	// RFC 7230, 3.2.6. Field Value Components
-	return r == 0x09 || r == 0x20 || // HTAB or SP
-		isVisibleChar(r) ||
-		isObsoleteTextChar(r)
+	return c >= 0x80 && c <= 0xFF
+}
+
+func isQuotedTextChar(c byte) bool {
+	// RFC 7230, 3.2.6. Field Value Components
+	return c == 0x09 || c == 0x20 || // HTAB or SP
+		c == 0x21 ||
+		(c >= 0x23 && c <= 0x5B) ||
+		(c >= 0x5D && c <= 0x7E) ||
+		isObsoleteTextChar(c)
+}
+
+func isQuotedPairChar(c byte) bool {
+	// RFC 7230, 3.2.6. Field Value Components
+	return c == 0x09 || c == 0x20 || // HTAB or SP
+		isVisibleChar(c) ||
+		isObsoleteTextChar(c)
 }
 
 func consumeToken(s string) (token, remaining string, consumed bool) {
-	index := strings.IndexFunc(s, isNotTokenChar)
-	if index == -1 {
-		return s, "", len(s) > 0
-	} else {
-		return s[:index], s[index:], index > 0
+	for i := 0; i < len(s); i++ {
+		if !isTokenChar(s[i]) {
+			return s[:i], s[i:], i > 0
+		}
 	}
+
+	return s, "", true
 }
 
 func consumeQuotedString(s string) (token, remaining string, consumed bool) {
@@ -75,13 +82,13 @@ func consumeQuotedString(s string) (token, remaining string, consumed bool) {
 
 		if s[index] == '\\' {
 			index++
-			if len(s) <= index || !isQuotedPairChar(rune(s[index])) {
+			if len(s) <= index || !isQuotedPairChar(s[index]) {
 				return "", s, false
 			}
 
 			stringBuilder.WriteByte(s[index])
 		} else {
-			if !isQuotedTextChar(rune(s[index])) {
+			if !isQuotedTextChar(s[index]) {
 				return "", s, false
 			}
 			stringBuilder.WriteByte(s[index])
@@ -92,7 +99,13 @@ func consumeQuotedString(s string) (token, remaining string, consumed bool) {
 }
 
 func skipWhiteSpaces(s string) string {
-	return strings.TrimLeftFunc(s, isWhiteSpaceChar)
+	for i := 0; i < len(s); i++ {
+		if !isWhiteSpaceChar(s[i]) {
+			return s[i:]
+		}
+	}
+
+	return ""
 }
 
 func GetMediaType(request *http.Request) (string, map[string]string, error) {
