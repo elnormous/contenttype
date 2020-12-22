@@ -96,6 +96,7 @@ func skipWhiteSpaces(s string) string {
 }
 
 func GetMediaType(request *http.Request) (string, map[string]string, error) {
+	// RFC 7231, 3.1.1.1. Media Type
 	contentTypes := request.Header.Values("Content-Type")
 
 	if len(contentTypes) == 0 {
