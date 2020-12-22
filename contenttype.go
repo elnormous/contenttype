@@ -9,12 +9,11 @@ import (
 
 var InvalidContentTypeError = errors.New("Invalid content type")
 
-func isTSpecial(r rune) bool {
-	return strings.ContainsRune(`()<>@,;:\"/[]?=`, r)
-}
-
 func isTokenChar(r rune) bool {
-	return r > 0x20 && r < 0x7f && !isTSpecial(r)
+	// RFC 7230, 3.2.6. Field Value Components
+	return strings.ContainsRune("!#$%&'*+-.^_`|~", r) ||
+		(r >= 0x30 && r <= 0x39) || // DIGIT
+		(r >= 0x41 && r <= 0x5A) || (r >= 0x61 && r <= 0x7A) // ALPHA
 }
 
 func isNotTokenChar(r rune) bool {
@@ -30,7 +29,7 @@ func isToken(s string) bool {
 
 func isWhiteSpaceChar(r rune) bool {
 	// RFC 7230, 3.2.3. Whitespace
-	return r == 0x09 || r == 0x20
+	return r == 0x09 || r == 0x20 // HTAB or SP
 }
 
 func GetMediaType(request *http.Request) (string, map[string]string, error) {
