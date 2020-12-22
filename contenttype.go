@@ -20,13 +20,6 @@ func isNotTokenChar(r rune) bool {
 	return !isTokenChar(r)
 }
 
-func isToken(s string) bool {
-	if len(s) == 0 {
-		return false
-	}
-	return strings.IndexFunc(s, isNotTokenChar) == -1
-}
-
 func consumeToken(s string) (token, remaining string) {
 	index := strings.IndexFunc(s, isNotTokenChar)
 	if index == -1 {
