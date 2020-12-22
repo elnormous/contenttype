@@ -2,12 +2,12 @@ package contenttype
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 )
 
 var InvalidContentTypeError = errors.New("Invalid content type")
+var InvalidParameterError = errors.New("Invalid parameter")
 
 func isTokenChar(r rune) bool {
 	// RFC 7230, 3.2.6. Field Value Components
@@ -27,9 +27,22 @@ func isToken(s string) bool {
 	return strings.IndexFunc(s, isNotTokenChar) == -1
 }
 
+func consumeToken(s string) (token, remaining string) {
+	index := strings.IndexFunc(s, isNotTokenChar)
+	if index == -1 {
+		return s, ""
+	} else {
+		return s[:index], s[index:]
+	}
+}
+
 func isWhiteSpaceChar(r rune) bool {
 	// RFC 7230, 3.2.3. Whitespace
 	return r == 0x09 || r == 0x20 // HTAB or SP
+}
+
+func skipWhiteSpaces(s string) string {
+	return strings.TrimLeftFunc(s, isWhiteSpaceChar)
 }
 
 func GetMediaType(request *http.Request) (string, map[string]string, error) {
@@ -39,41 +52,55 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 		return "", map[string]string{}, nil
 	}
 
-	contentType := strings.TrimFunc(contentTypes[0], isWhiteSpaceChar)
+	s := skipWhiteSpaces(contentTypes[0])
 
-	slashIndex := strings.IndexRune(contentType, '/')
-	if slashIndex == -1 {
+	var supertype string
+	supertype, s = consumeToken(s)
+
+	if len(supertype) == 0 {
 		return "", nil, InvalidContentTypeError
 	}
+
+	if len(s) == 0 || s[0] != '/' {
+		return "", nil, InvalidContentTypeError
+	}
+
+	s = s[1:] // skip the slash
+
+	var subtype string
+	subtype, s = consumeToken(s)
+
+	if len(subtype) == 0 {
+		return "", nil, InvalidContentTypeError
+	}
+
+	s = skipWhiteSpaces(s)
 
 	parameters := make(map[string]string)
 
-	endIndex := strings.IndexRune(contentType, ';')
-	if endIndex == -1 {
-		endIndex = len(contentType)
-	} else {
-		parameterIndex := endIndex
-		parameterString := contentType
-
-		for parameterIndex != -1 {
-			parameterString := parameterString[parameterIndex+1:]
-
-			equalIndex := strings.IndexRune(contentType, '=')
-			key := contentType[:equalIndex]
-			log.Println(key)
-
-			parameterIndex = strings.IndexRune(parameterString, ';')
+	for len(s) != 0 {
+		if s[0] != ';' {
+			return "", nil, InvalidParameterError
 		}
+
+		s = s[1:] // skip the semicolon
+		var key string
+		key, s = consumeToken(s)
+
+		if len(s) == 0 || s[0] != '=' {
+			return "", nil, InvalidParameterError
+		}
+
+		s = s[1:] // skip the equal sign
+		var value string
+		value, s = consumeToken(s)
+
+		parameters[key] = value
+
+		s = skipWhiteSpaces(s)
 	}
 
 	var stringBuilder strings.Builder
-	supertype := contentType[:slashIndex]
-	subtype := contentType[slashIndex+1 : endIndex]
-
-	if !isToken(supertype) || !isToken(subtype) {
-		return "", nil, InvalidContentTypeError
-	}
-
 	stringBuilder.WriteString(strings.ToLower(supertype))
 	stringBuilder.WriteByte('/')
 	stringBuilder.WriteString(strings.ToLower(subtype))

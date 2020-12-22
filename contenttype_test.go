@@ -20,8 +20,14 @@ func TestGetMediaType(t *testing.T) {
 		{"*/*", "*/*", map[string]string{}, nil},
 		{"Application/JSON", "application/json", map[string]string{}, nil},
 		{"Application", "", nil, InvalidContentTypeError},
-		{"Application/JSON/test", "", nil, InvalidContentTypeError},
+		{"Application/JSON/test", "", nil, InvalidParameterError},
 		{" application/json ", "application/json", map[string]string{}, nil},
+		{"Application/XML;charset=utf-8", "application/xml", map[string]string{
+			"charset": "utf-8",
+		}, nil},
+		{"Application/XML;foo=bar ", "application/xml", map[string]string{
+			"foo": "bar",
+		}, nil},
 	}
 
 	for _, table := range tables {
@@ -36,12 +42,12 @@ func TestGetMediaType(t *testing.T) {
 		result, parameters, err := GetMediaType(request)
 		if table.err != nil {
 			if err == nil {
-				t.Errorf("Expected an error")
+				t.Errorf("Expected an error for %s", table.header)
 			} else if table.err != err {
 				t.Errorf("Unexpected error \"%s\", expected \"%s\"", err.Error(), table.err.Error())
 			}
 		} else if table.err == nil && err != nil {
-			t.Errorf("Got an unexpected error \"%s\"", err.Error())
+			t.Errorf("Got an unexpected error \"%s\" for %s", err.Error(), table.header)
 		} else if result != table.result {
 			t.Errorf("Invalid content type, got %s, exptected %s", result, table.result)
 		} else if !reflect.DeepEqual(parameters, table.parameters) {
