@@ -77,6 +77,8 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 		}
 
 		s = s[1:] // skip the semicolon
+		s = skipWhiteSpaces(s)
+
 		var key string
 		key, s = consumeToken(s)
 
