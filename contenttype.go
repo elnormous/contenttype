@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"unicode"
 )
 
 var InvalidContentTypeError = errors.New("Invalid content type")
@@ -27,33 +28,44 @@ func isToken(s string) bool {
 	return strings.IndexFunc(s, isNotTokenChar) == -1
 }
 
-func GetMediaType(request *http.Request) (string, error) {
+func GetMediaType(request *http.Request) (string, map[string]string, error) {
 	values := request.Header.Values("Content-Type")
 
 	if len(values) == 0 {
-		return "", nil
+		return "", map[string]string{}, nil
 	}
 
 	value := values[0]
 
 	if value == "*/*" {
-		return "", InvalidContentTypeError
+		return "", nil, InvalidContentTypeError
 	}
 
-	slashIndex := strings.Index(value, "/")
+	slashIndex := strings.IndexByte(value, '/')
 	if slashIndex == -1 {
-		return "", InvalidContentTypeError
+		return "", nil, InvalidContentTypeError
+	}
+
+	parameters := make(map[string]string)
+
+	endIndex := strings.Index(value, ";")
+	if endIndex == -1 {
+		endIndex = len(value)
+	} else {
+		// TODO: parse parameters in while loop
 	}
 
 	var stringBuilder strings.Builder
-	supertype, subtype := value[:slashIndex], value[slashIndex+1:]
+	supertype := strings.TrimLeftFunc(value[:slashIndex], unicode.IsSpace)
+	subtype := strings.TrimRightFunc(value[slashIndex+1:endIndex], unicode.IsSpace)
+
 	if !isToken(supertype) || !isToken(subtype) {
-		return "", InvalidContentTypeError
+		return "", nil, InvalidContentTypeError
 	}
 
 	stringBuilder.WriteString(strings.ToLower(supertype))
 	stringBuilder.WriteByte('/')
 	stringBuilder.WriteString(strings.ToLower(subtype))
 
-	return stringBuilder.String(), nil
+	return stringBuilder.String(), parameters, nil
 }
