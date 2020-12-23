@@ -55,13 +55,13 @@ func TestGetMediaTypeErrors(t *testing.T) {
 		header string
 		err    error
 	}{
-		{"Application", InvalidContentTypeError},
-		{"/Application", InvalidContentTypeError},
-		{"Application/", InvalidContentSubtypeError},
-		{"Application/JSON/test", ExpectedParameterError},
-		{"application/xml;=bar ", InvalidParameterError},
-		{"application/xml; =bar ", InvalidParameterError},
-		{"application/xml;foo= ", InvalidParameterError},
+		{"Application", InvalidMediaTypeError},
+		{"/Application", InvalidMediaTypeError},
+		{"Application/", InvalidMediaTypeError},
+		{"Application/JSON/test", InvalidMediaTypeError},
+		{"application/xml;=bar ", InvalidMediaTypeError},
+		{"application/xml; =bar ", InvalidMediaTypeError},
+		{"application/xml;foo= ", InvalidMediaTypeError},
 	}
 
 	for _, testCase := range testCases {
@@ -93,7 +93,8 @@ func TestGetAcceptableMediaType(t *testing.T) {
 		{"", []string{"application/json"}, "application/json", map[string]string{}},
 		{"application/json", []string{"application/json"}, "application/json", map[string]string{}},
 		{"Application/Json", []string{"application/json"}, "application/json", map[string]string{}},
-		{"application/json,application/xml", []string{"application/json"}, "application/json", map[string]string{}},
+		{"text/plain,application/xml", []string{"text/plain"}, "text/plain", map[string]string{}},
+		{"text/plain,application/xml", []string{"application/xml"}, "application/xml", map[string]string{}},
 	}
 
 	for _, testCase := range testCases {
@@ -126,6 +127,10 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 	}{
 		{"", []string{}, NoAvailableTypeGivenError},
 		{"application/xml", []string{"application/json"}, NoAcceptableTypeFoundError},
+		{"application/xml/", []string{"application/json"}, InvalidMediaRangeError},
+		{"application/xml,", []string{"application/json"}, InvalidMediaTypeError},
+		{"/xml", []string{"application/json"}, InvalidMediaTypeError},
+		{"application/,", []string{"application/json"}, InvalidMediaTypeError},
 	}
 
 	for _, testCase := range testCases {
