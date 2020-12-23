@@ -10,6 +10,8 @@ var InvalidContentTypeError = errors.New("Invalid content type")
 var InvalidContentSubtypeError = errors.New("Invalid content subtype")
 var ExpectedParameterError = errors.New("Expected a parameter")
 var InvalidParameterError = errors.New("Invalid parameter")
+var NoAvailableTypeGivenError = errors.New("No available type given")
+var NoAcceptableTypeFoundError = errors.New("No acceptable type found")
 
 func isWhiteSpaceChar(c byte) bool {
 	// RFC 7230, 3.2.3. Whitespace
@@ -112,13 +114,13 @@ func skipWhiteSpaces(s string) string {
 
 func GetMediaType(request *http.Request) (string, map[string]string, error) {
 	// RFC 7231, 3.1.1.1. Media Type
-	contentTypes := request.Header.Values("Content-Type")
+	contentTypeHeaders := request.Header.Values("Content-Type")
 
-	if len(contentTypes) == 0 {
+	if len(contentTypeHeaders) == 0 {
 		return "", map[string]string{}, nil
 	}
 
-	s := skipWhiteSpaces(contentTypes[0])
+	s := skipWhiteSpaces(contentTypeHeaders[0])
 
 	var ok bool
 	var supertype string
@@ -126,6 +128,7 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 	if !ok {
 		return "", nil, InvalidContentTypeError
 	}
+	supertype = strings.ToLower(supertype)
 
 	if len(s) == 0 || s[0] != '/' {
 		return "", nil, InvalidContentTypeError
@@ -138,6 +141,7 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 	if !ok {
 		return "", nil, InvalidContentSubtypeError
 	}
+	subtype = strings.ToLower(subtype)
 
 	s = skipWhiteSpaces(s)
 
@@ -156,6 +160,7 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 		if !ok {
 			return "", nil, InvalidParameterError
 		}
+		key = strings.ToLower(key)
 
 		if len(s) == 0 || s[0] != '=' {
 			return "", nil, InvalidParameterError
@@ -177,20 +182,67 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 				return "", nil, InvalidParameterError
 			}
 		}
+		value = strings.ToLower(value)
 
-		parameters[strings.ToLower(key)] = strings.ToLower(value)
+		parameters[key] = value
 
 		s = skipWhiteSpaces(s)
 	}
 
 	var stringBuilder strings.Builder
-	stringBuilder.WriteString(strings.ToLower(supertype))
+	stringBuilder.WriteString(supertype)
 	stringBuilder.WriteByte('/')
-	stringBuilder.WriteString(strings.ToLower(subtype))
+	stringBuilder.WriteString(subtype)
 
 	return stringBuilder.String(), parameters, nil
 }
 
-func GetAcceptedMediaType(request *http.Request, acceptedMediaTypes []string) {
+func GetAcceptableMediaType(request *http.Request, availableMediaTypes []string) (string, map[string]string, error) {
 	// RFC 7231, 5.3.2. Accept
+	if len(availableMediaTypes) == 0 {
+		return "", map[string]string{}, NoAvailableTypeGivenError
+	}
+
+	acceptHeaders := request.Header.Values("Accept")
+
+	if len(acceptHeaders) == 0 {
+		return availableMediaTypes[0], map[string]string{}, nil
+	}
+
+	s := skipWhiteSpaces(acceptHeaders[0])
+
+	//acceptableMediaTypes := make([]string)
+
+	for len(s) > 0 {
+		var ok bool
+		var supertype string
+		supertype, s, ok = consumeToken(s)
+		if !ok {
+			return "", nil, InvalidContentTypeError
+		}
+
+		if len(s) == 0 || s[0] != '/' {
+			return "", nil, InvalidContentTypeError
+		}
+
+		s = s[1:] // skip the slash
+
+		var subtype string
+		subtype, s, ok = consumeToken(s)
+		if !ok {
+			return "", nil, InvalidContentSubtypeError
+		}
+
+		if supertype+"/"+subtype == availableMediaTypes[0] {
+			return availableMediaTypes[0], map[string]string{}, nil
+		}
+
+		s = skipWhiteSpaces(s)
+	}
+
+	if availableMediaTypes[0] != strings.ToLower(s) {
+		return "", map[string]string{}, NoAcceptableTypeFoundError
+	}
+
+	return availableMediaTypes[0], map[string]string{}, nil
 }
