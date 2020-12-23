@@ -4,14 +4,15 @@
 
 ```go
 import (
+	"log"
 	"github.com/elnormous/contenttype"
 )
 
 func handleRequest(responseWriter http.ResponseWriter, request *http.Request) {
-    mediaType, err := contenttype.GetMediaType(request)
+    mediaType, parameters, err := contenttype.GetMediaType(request)
     if err != nil {
         // handle the error
     }
-    log.Println("Media type: " + mediaType)
+    log.Println("Media type:", result, "parameters:", parameters)
 }
 ```
