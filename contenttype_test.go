@@ -25,6 +25,7 @@ func TestGetMediaType(t *testing.T) {
 		{"application/xml;foo=\"bar\" ", "application/xml", map[string]string{"foo": "bar"}},
 		{"application/xml;foo=\"\" ", "application/xml", map[string]string{"foo": ""}},
 		{"application/xml;foo=\"\\\"b\" ", "application/xml", map[string]string{"foo": "\"b"}},
+		{"application/xml;foo=\"\\\"B\" ", "application/xml", map[string]string{"foo": "\"b"}},
 		{"a/b+c;a=b;c=d", "a/b+c", map[string]string{"a": "b", "c": "d"}},
 		{"a/b;A=B", "a/b", map[string]string{"a": "b"}},
 	}

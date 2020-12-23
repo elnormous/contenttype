@@ -64,11 +64,11 @@ func isQuotedPairChar(c byte) bool {
 func consumeToken(s string) (token, remaining string, consumed bool) {
 	for i := 0; i < len(s); i++ {
 		if !isTokenChar(s[i]) {
-			return s[:i], s[i:], i > 0
+			return strings.ToLower(s[:i]), s[i:], i > 0
 		}
 	}
 
-	return s, "", len(s) > 0
+	return strings.ToLower(s), "", len(s) > 0
 }
 
 func consumeQuotedString(s string) (token, remaining string, consumed bool) {
@@ -80,7 +80,7 @@ func consumeQuotedString(s string) (token, remaining string, consumed bool) {
 
 	for index := 1; index < len(s); index++ {
 		if s[index] == '"' {
-			return stringBuilder.String(), s[index+1:], true
+			return strings.ToLower(stringBuilder.String()), s[index+1:], true
 		}
 
 		if s[index] == '\\' {
@@ -121,7 +121,6 @@ func consumeMediaType(s string) (string, string, bool) {
 	if !ok {
 		return "", s, false
 	}
-	supertype = strings.ToLower(supertype)
 
 	if len(s) == 0 || s[0] != '/' {
 		return "", s, false
@@ -134,7 +133,6 @@ func consumeMediaType(s string) (string, string, bool) {
 	if !ok {
 		return "", s, false
 	}
-	subtype = strings.ToLower(subtype)
 
 	s = skipWhiteSpaces(s)
 
@@ -167,7 +165,6 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 		if !ok {
 			return "", map[string]string{}, InvalidParameterError
 		}
-		key = strings.ToLower(key)
 
 		if len(s) == 0 || s[0] != '=' {
 			return "", map[string]string{}, InvalidParameterError
@@ -189,7 +186,6 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 				return "", map[string]string{}, InvalidParameterError
 			}
 		}
-		value = strings.ToLower(value)
 
 		parameters[key] = value
 
