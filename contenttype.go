@@ -12,6 +12,9 @@ var InvalidParameterError = errors.New("Invalid parameter")
 var NoAvailableTypeGivenError = errors.New("No available type given")
 var NoAcceptableTypeFoundError = errors.New("No acceptable type found")
 
+type MediaType = [2]string
+type Parameters = map[string]string
+
 func isWhiteSpaceChar(c byte) bool {
 	// RFC 7230, 3.2.3. Whitespace
 	return c == 0x09 || c == 0x20 // HTAB or SP
@@ -61,6 +64,16 @@ func isQuotedPairChar(c byte) bool {
 		isObsoleteTextChar(c)
 }
 
+func skipWhiteSpaces(s string) string {
+	for i := 0; i < len(s); i++ {
+		if !isWhiteSpaceChar(s[i]) {
+			return s[i:]
+		}
+	}
+
+	return ""
+}
+
 func consumeToken(s string) (token, remaining string, consumed bool) {
 	for i := 0; i < len(s); i++ {
 		if !isTokenChar(s[i]) {
@@ -101,59 +114,49 @@ func consumeQuotedString(s string) (token, remaining string, consumed bool) {
 	return "", s, false
 }
 
-func skipWhiteSpaces(s string) string {
-	for i := 0; i < len(s); i++ {
-		if !isWhiteSpaceChar(s[i]) {
-			return s[i:]
-		}
-	}
-
-	return ""
-}
-
-func consumeMediaType(s string) (string, string, bool) {
+func consumeMediaType(s string) (MediaType, string, bool) {
 	// RFC 7231, 3.1.1.1. Media Type
 	s = skipWhiteSpaces(s)
 
+	var mediaType MediaType
+
 	var ok bool
-	var supertype string
-	supertype, s, ok = consumeToken(s)
+	mediaType[0], s, ok = consumeToken(s)
 	if !ok {
-		return "", s, false
+		return MediaType{}, s, false
 	}
 
 	if len(s) == 0 || s[0] != '/' {
-		return "", s, false
+		return MediaType{}, s, false
 	}
 
 	s = s[1:] // skip the slash
 
-	var subtype string
-	subtype, s, ok = consumeToken(s)
+	mediaType[1], s, ok = consumeToken(s)
 	if !ok {
-		return "", s, false
+		return MediaType{}, s, false
 	}
 
 	s = skipWhiteSpaces(s)
 
-	return supertype + "/" + subtype, s, true
+	return mediaType, s, true
 }
 
-func GetMediaType(request *http.Request) (string, map[string]string, error) {
+func GetMediaType(request *http.Request) (MediaType, Parameters, error) {
 	// RFC 7231, 3.1.1.5. Content-Type
 	contentTypeHeaders := request.Header.Values("Content-Type")
 
 	if len(contentTypeHeaders) == 0 {
-		return "", map[string]string{}, nil
+		return MediaType{}, Parameters{}, nil
 	}
 
 	mediaType, s, consumed := consumeMediaType(contentTypeHeaders[0])
 
 	if !consumed {
-		return "", map[string]string{}, InvalidMediaTypeError
+		return MediaType{}, Parameters{}, InvalidMediaTypeError
 	}
 
-	parameters := make(map[string]string)
+	parameters := make(Parameters)
 
 	for len(s) > 0 && s[0] == ';' {
 		s = s[1:] // skip the semicolon
@@ -163,11 +166,11 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 		var key string
 		key, s, ok = consumeToken(s)
 		if !ok {
-			return "", map[string]string{}, InvalidParameterError
+			return MediaType{}, Parameters{}, InvalidParameterError
 		}
 
 		if len(s) == 0 || s[0] != '=' {
-			return "", map[string]string{}, InvalidParameterError
+			return MediaType{}, Parameters{}, InvalidParameterError
 		}
 
 		s = s[1:] // skip the equal sign
@@ -177,13 +180,13 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 			value, s, ok = consumeQuotedString(s)
 
 			if !ok {
-				return "", map[string]string{}, InvalidParameterError
+				return MediaType{}, Parameters{}, InvalidParameterError
 			}
 
 		} else {
 			value, s, ok = consumeToken(s)
 			if !ok {
-				return "", map[string]string{}, InvalidParameterError
+				return MediaType{}, Parameters{}, InvalidParameterError
 			}
 		}
 
@@ -193,22 +196,22 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 	}
 
 	if len(s) > 0 {
-		return "", map[string]string{}, InvalidMediaTypeError
+		return MediaType{}, Parameters{}, InvalidMediaTypeError
 	}
 
 	return mediaType, parameters, nil
 }
 
-func GetAcceptableMediaType(request *http.Request, availableMediaTypes []string) (string, map[string]string, error) {
+func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaType) (MediaType, Parameters, error) {
 	// RFC 7231, 5.3.2. Accept
 	if len(availableMediaTypes) == 0 {
-		return "", map[string]string{}, NoAvailableTypeGivenError
+		return MediaType{}, Parameters{}, NoAvailableTypeGivenError
 	}
 
 	acceptHeaders := request.Header.Values("Accept")
 
 	if len(acceptHeaders) == 0 {
-		return availableMediaTypes[0], map[string]string{}, nil
+		return availableMediaTypes[0], Parameters{}, nil
 	}
 
 	s := acceptHeaders[0]
@@ -219,18 +222,18 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []string)
 		s = remaining
 
 		if !consumed {
-			return "", map[string]string{}, InvalidMediaTypeError
+			return MediaType{}, Parameters{}, InvalidMediaTypeError
 		}
 
 		for _, availableMediaType := range availableMediaTypes {
 			if mediaType == availableMediaType {
-				return mediaType, map[string]string{}, nil
+				return mediaType, Parameters{}, nil
 			}
 		}
 
 		if len(s) > 0 {
 			if s[0] != ',' {
-				return "", map[string]string{}, InvalidMediaRangeError
+				return MediaType{}, Parameters{}, InvalidMediaRangeError
 			}
 
 			s = s[1:] // skip the comma
@@ -238,8 +241,8 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []string)
 	}
 
 	if len(s) > 0 {
-		return "", map[string]string{}, InvalidMediaTypeError
+		return MediaType{}, Parameters{}, InvalidMediaTypeError
 	}
 
-	return "", map[string]string{}, NoAcceptableTypeFoundError
+	return MediaType{}, Parameters{}, NoAcceptableTypeFoundError
 }

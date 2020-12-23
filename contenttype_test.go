@@ -11,23 +11,23 @@ import (
 func TestGetMediaType(t *testing.T) {
 	testCases := []struct {
 		header     string
-		result     string
-		parameters map[string]string
+		result     MediaType
+		parameters Parameters
 	}{
-		{"", "", map[string]string{}},
-		{"application/json", "application/json", map[string]string{}},
-		{"*/*", "*/*", map[string]string{}},
-		{"Application/JSON", "application/json", map[string]string{}},
-		{" application/json ", "application/json", map[string]string{}},
-		{"Application/XML;charset=utf-8", "application/xml", map[string]string{"charset": "utf-8"}},
-		{"application/xml;foo=bar ", "application/xml", map[string]string{"foo": "bar"}},
-		{"application/xml ; foo=bar ", "application/xml", map[string]string{"foo": "bar"}},
-		{"application/xml;foo=\"bar\" ", "application/xml", map[string]string{"foo": "bar"}},
-		{"application/xml;foo=\"\" ", "application/xml", map[string]string{"foo": ""}},
-		{"application/xml;foo=\"\\\"b\" ", "application/xml", map[string]string{"foo": "\"b"}},
-		{"application/xml;foo=\"\\\"B\" ", "application/xml", map[string]string{"foo": "\"b"}},
-		{"a/b+c;a=b;c=d", "a/b+c", map[string]string{"a": "b", "c": "d"}},
-		{"a/b;A=B", "a/b", map[string]string{"a": "b"}},
+		{"", MediaType{}, Parameters{}},
+		{"application/json", MediaType{"application", "json"}, Parameters{}},
+		{"*/*", MediaType{"*", "*"}, Parameters{}},
+		{"Application/JSON", MediaType{"application", "json"}, Parameters{}},
+		{" application/json ", MediaType{"application", "json"}, Parameters{}},
+		{"Application/XML;charset=utf-8", MediaType{"application", "xml"}, Parameters{"charset": "utf-8"}},
+		{"application/xml;foo=bar ", MediaType{"application", "xml"}, Parameters{"foo": "bar"}},
+		{"application/xml ; foo=bar ", MediaType{"application", "xml"}, Parameters{"foo": "bar"}},
+		{"application/xml;foo=\"bar\" ", MediaType{"application", "xml"}, Parameters{"foo": "bar"}},
+		{"application/xml;foo=\"\" ", MediaType{"application", "xml"}, Parameters{"foo": ""}},
+		{"application/xml;foo=\"\\\"b\" ", MediaType{"application", "xml"}, Parameters{"foo": "\"b"}},
+		{"application/xml;foo=\"\\\"B\" ", MediaType{"application", "xml"}, Parameters{"foo": "\"b"}},
+		{"a/b+c;a=b;c=d", MediaType{"a", "b+c"}, Parameters{"a": "b", "c": "d"}},
+		{"a/b;A=B", MediaType{"a", "b"}, Parameters{"a": "b"}},
 	}
 
 	for _, testCase := range testCases {
@@ -87,15 +87,15 @@ func TestGetMediaTypeErrors(t *testing.T) {
 func TestGetAcceptableMediaType(t *testing.T) {
 	testCases := []struct {
 		header              string
-		availableMediaTypes []string
-		result              string
-		parameters          map[string]string
+		availableMediaTypes []MediaType
+		result              MediaType
+		parameters          Parameters
 	}{
-		{"", []string{"application/json"}, "application/json", map[string]string{}},
-		{"application/json", []string{"application/json"}, "application/json", map[string]string{}},
-		{"Application/Json", []string{"application/json"}, "application/json", map[string]string{}},
-		{"text/plain,application/xml", []string{"text/plain"}, "text/plain", map[string]string{}},
-		{"text/plain,application/xml", []string{"application/xml"}, "application/xml", map[string]string{}},
+		{"", []MediaType{{"application", "json"}}, MediaType{"application", "json"}, Parameters{}},
+		{"application/json", []MediaType{{"application", "json"}}, MediaType{"application", "json"}, Parameters{}},
+		{"Application/Json", []MediaType{{"application", "json"}}, MediaType{"application", "json"}, Parameters{}},
+		{"text/plain,application/xml", []MediaType{{"text", "plain"}}, MediaType{"text", "plain"}, Parameters{}},
+		{"text/plain,application/xml", []MediaType{{"application", "xml"}}, MediaType{"application", "xml"}, Parameters{}},
 	}
 
 	for _, testCase := range testCases {
@@ -123,15 +123,15 @@ func TestGetAcceptableMediaType(t *testing.T) {
 func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 	testCases := []struct {
 		header              string
-		availableMediaTypes []string
+		availableMediaTypes []MediaType
 		err                 error
 	}{
-		{"", []string{}, NoAvailableTypeGivenError},
-		{"application/xml", []string{"application/json"}, NoAcceptableTypeFoundError},
-		{"application/xml/", []string{"application/json"}, InvalidMediaRangeError},
-		{"application/xml,", []string{"application/json"}, InvalidMediaTypeError},
-		{"/xml", []string{"application/json"}, InvalidMediaTypeError},
-		{"application/,", []string{"application/json"}, InvalidMediaTypeError},
+		{"", []MediaType{}, NoAvailableTypeGivenError},
+		{"application/xml", []MediaType{{"application", "json"}}, NoAcceptableTypeFoundError},
+		{"application/xml/", []MediaType{{"application", "json"}}, InvalidMediaRangeError},
+		{"application/xml,", []MediaType{{"application", "json"}}, InvalidMediaTypeError},
+		{"/xml", []MediaType{{"application", "json"}}, InvalidMediaTypeError},
+		{"application/,", []MediaType{{"application", "json"}}, InvalidMediaTypeError},
 	}
 
 	for _, testCase := range testCases {
