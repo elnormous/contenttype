@@ -2,6 +2,7 @@ package contenttype
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -178,11 +179,9 @@ func GetMediaType(request *http.Request) (MediaType, Parameters, error) {
 		var value string
 		if len(s) > 0 && s[0] == '"' { // opening quote
 			value, s, ok = consumeQuotedString(s)
-
 			if !ok {
 				return MediaType{}, Parameters{}, InvalidParameterError
 			}
-
 		} else {
 			value, s, ok = consumeToken(s)
 			if !ok {
@@ -220,6 +219,7 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 		mediaType, remaining, consumed := consumeMediaType(s)
 
 		s = remaining
+		log.Println(mediaType, s, consumed)
 
 		if !consumed {
 			return MediaType{}, Parameters{}, InvalidMediaTypeError
@@ -232,7 +232,7 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 		}
 
 		if len(s) > 0 {
-			if s[0] != ',' {
+			if s[0] != ',' || len(s) <= 2 {
 				return MediaType{}, Parameters{}, InvalidMediaRangeError
 			}
 
@@ -241,7 +241,7 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 	}
 
 	if len(s) > 0 {
-		return MediaType{}, Parameters{}, InvalidMediaTypeError
+		return MediaType{}, Parameters{}, InvalidMediaRangeError
 	}
 
 	return MediaType{}, Parameters{}, NoAcceptableTypeFoundError

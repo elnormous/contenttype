@@ -129,7 +129,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 		{"", []MediaType{}, NoAvailableTypeGivenError},
 		{"application/xml", []MediaType{{"application", "json"}}, NoAcceptableTypeFoundError},
 		{"application/xml/", []MediaType{{"application", "json"}}, InvalidMediaRangeError},
-		{"application/xml,", []MediaType{{"application", "json"}}, InvalidMediaTypeError},
+		{"application/xml,", []MediaType{{"application", "json"}}, InvalidMediaRangeError},
 		{"/xml", []MediaType{{"application", "json"}}, InvalidMediaTypeError},
 		{"application/,", []MediaType{{"application", "json"}}, InvalidMediaTypeError},
 	}
