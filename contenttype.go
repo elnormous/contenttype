@@ -7,6 +7,8 @@ import (
 )
 
 var InvalidContentTypeError = errors.New("Invalid content type")
+var InvalidContentSubtypeError = errors.New("Invalid content subtype")
+var ExpectedParameterError = errors.New("Expected a parameter")
 var InvalidParameterError = errors.New("Invalid parameter")
 
 func isWhiteSpaceChar(c byte) bool {
@@ -65,7 +67,7 @@ func consumeToken(s string) (token, remaining string, consumed bool) {
 		}
 	}
 
-	return s, "", true
+	return s, "", len(s) > 0
 }
 
 func consumeQuotedString(s string) (token, remaining string, consumed bool) {
@@ -134,7 +136,7 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 	var subtype string
 	subtype, s, ok = consumeToken(s)
 	if !ok {
-		return "", nil, InvalidContentTypeError
+		return "", nil, InvalidContentSubtypeError
 	}
 
 	s = skipWhiteSpaces(s)
@@ -143,7 +145,7 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 
 	for len(s) != 0 {
 		if s[0] != ';' {
-			return "", nil, InvalidParameterError
+			return "", nil, ExpectedParameterError
 		}
 
 		s = s[1:] // skip the semicolon
@@ -187,4 +189,8 @@ func GetMediaType(request *http.Request) (string, map[string]string, error) {
 	stringBuilder.WriteString(strings.ToLower(subtype))
 
 	return stringBuilder.String(), parameters, nil
+}
+
+func GetAcceptedMediaType(request *http.Request, acceptedMediaTypes []string) {
+	// RFC 7231, 5.3.2. Accept
 }

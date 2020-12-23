@@ -21,7 +21,8 @@ func TestGetMediaType(t *testing.T) {
 		{"Application/JSON", "application/json", map[string]string{}, nil},
 		{"Application", "", nil, InvalidContentTypeError},
 		{"/Application", "", nil, InvalidContentTypeError},
-		{"Application/JSON/test", "", nil, InvalidParameterError},
+		{"Application/", "", nil, InvalidContentSubtypeError},
+		{"Application/JSON/test", "", nil, ExpectedParameterError},
 		{" application/json ", "application/json", map[string]string{}, nil},
 		{"Application/XML;charset=utf-8", "application/xml", map[string]string{"charset": "utf-8"}, nil},
 		{"application/xml;foo=bar ", "application/xml", map[string]string{"foo": "bar"}, nil},
@@ -61,4 +62,12 @@ func TestGetMediaType(t *testing.T) {
 			t.Errorf("Wrong parameters, got %v, expected %v", fmt.Sprint(parameters), fmt.Sprint(table.parameters))
 		}
 	}
+}
+
+func TestGetAcceptedMediaType(t *testing.T) {
+	request, err := http.NewRequest(http.MethodGet, "http://test.test", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	GetAcceptedMediaType(request, []string{"application/json"})
 }
