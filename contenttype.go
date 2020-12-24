@@ -2,7 +2,6 @@ package contenttype
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -86,17 +85,10 @@ func consumeToken(s string) (token, remaining string, consumed bool) {
 }
 
 func consumeQuotedString(s string) (token, remaining string, consumed bool) {
-	if len(s) == 0 || s[0] != '"' {
-		return "", s, false
-	}
-
 	var stringBuilder strings.Builder
 
-	for index := 1; index < len(s); index++ {
-		if s[index] == '"' {
-			return strings.ToLower(stringBuilder.String()), s[index+1:], true
-		}
-
+	index := 0
+	for ; index < len(s); index++ {
 		if s[index] == '\\' {
 			index++
 			if len(s) <= index || !isQuotedPairChar(s[index]) {
@@ -104,15 +96,14 @@ func consumeQuotedString(s string) (token, remaining string, consumed bool) {
 			}
 
 			stringBuilder.WriteByte(s[index])
-		} else {
-			if !isQuotedTextChar(s[index]) {
-				return "", s, false
-			}
+		} else if isQuotedTextChar(s[index]) {
 			stringBuilder.WriteByte(s[index])
+		} else {
+			break
 		}
 	}
 
-	return "", s, false
+	return strings.ToLower(stringBuilder.String()), s[index:], true
 }
 
 func consumeMediaType(s string) (MediaType, string, bool) {
@@ -160,11 +151,20 @@ func consumeParameter(s string) (string, string, string, bool) {
 	s = s[1:] // skip the equal sign
 
 	var value string
-	if len(s) > 0 && s[0] == '"' { // opening quote
+	if len(s) > 0 && s[0] == '"' {
+		s = s[1:] // skip the opening quote
+
 		value, s, ok = consumeQuotedString(s)
 		if !ok {
 			return "", "", s, false
 		}
+
+		if len(s) == 0 || s[0] != '"' {
+			return "", "", s, false
+		}
+
+		s = s[1:] // skip the closing quote
+
 	} else {
 		value, s, ok = consumeToken(s)
 		if !ok {
@@ -230,10 +230,7 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 
 	for len(s) > 0 {
 		mediaType, remaining, consumed := consumeMediaType(s)
-
 		s = remaining
-		log.Println(mediaType, s, consumed)
-
 		if !consumed {
 			return MediaType{}, Parameters{}, InvalidMediaTypeError
 		}
