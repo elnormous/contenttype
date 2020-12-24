@@ -304,9 +304,7 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 				}
 
 				currentWeight = value
-				// q is a separator between media type and extension parameters
-				extensionParameters = true
-			} else {
+				// q is a separator between media type parameters and extension parameters
 				extensionParameters = true
 			}
 
