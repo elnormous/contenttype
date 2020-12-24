@@ -104,6 +104,7 @@ func TestGetAcceptableMediaType(t *testing.T) {
 		{"text/plain;q=1.0", []MediaType{{"text", "plain"}}, MediaType{"text", "plain"}, Parameters{"q": "1.0"}},
 		{"*/*", []MediaType{{"application", "json"}}, MediaType{"application", "json"}, Parameters{}},
 		{"application/*", []MediaType{{"application", "json"}}, MediaType{"application", "json"}, Parameters{}},
+		{"a/b;q=1.", []MediaType{{"a", "b"}}, MediaType{"a", "b"}, Parameters{"q": "1."}},
 	}
 
 	for _, testCase := range testCases {
@@ -143,6 +144,12 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 		{"a/b c", []MediaType{{"a", "b"}}, InvalidMediaRangeError},
 		{"a/b;c", []MediaType{{"a", "b"}}, InvalidParameterError},
 		{"*/b", []MediaType{{"a", "b"}}, InvalidMediaTypeError},
+		{"a/b;c=d;q=1", []MediaType{{"a", "b"}}, InvalidExtensionParameterError},
+		{"a/b;q=a", []MediaType{{"a", "b"}}, InvalidWeightError},
+		{"a/b;q=11", []MediaType{{"a", "b"}}, InvalidWeightError},
+		{"a/b;q=1.0000", []MediaType{{"a", "b"}}, InvalidWeightError},
+		{"a/b;q=1.a", []MediaType{{"a", "b"}}, InvalidWeightError},
+		{"a/b;q=1.100", []MediaType{{"a", "b"}}, InvalidWeightError},
 	}
 
 	for _, testCase := range testCases {

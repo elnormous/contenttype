@@ -9,8 +9,10 @@ import (
 var InvalidMediaTypeError = errors.New("Invalid media type")
 var InvalidMediaRangeError = errors.New("Invalid media range")
 var InvalidParameterError = errors.New("Invalid parameter")
+var InvalidExtensionParameterError = errors.New("Invalid extension parameter")
 var NoAvailableTypeGivenError = errors.New("No available type given")
 var NoAcceptableTypeFoundError = errors.New("No acceptable type found")
+var InvalidWeightError = errors.New("Invalid wieght")
 
 type MediaType = [2]string
 type Parameters = map[string]string
@@ -139,6 +141,7 @@ func consumeMediaType(s string) (MediaType, string, bool) {
 }
 
 func consumeParameter(s string) (string, string, string, bool) {
+	// RFC 7231, 3.1.1.1. Media Type
 	s = skipWhiteSpaces(s)
 
 	var ok bool
@@ -179,6 +182,28 @@ func consumeParameter(s string) (string, string, string, bool) {
 	s = skipWhiteSpaces(s)
 
 	return key, value, s, true
+}
+
+func checkWeight(s string) bool {
+	// RFC 7231, 5.3.1. Quality Values
+	if len(s) == 0 || (s[0] != '0' && s[0] != '1') {
+		return false
+	}
+
+	if len(s) > 1 {
+		if s[1] != '.' || len(s) > 5 {
+			return false
+		}
+
+		for index := 2; index < len(s); index++ {
+			if !isDigitChar(s[index]) ||
+				(s[0] == '1' && s[index] != '0') { // weight can not be greater than 1
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 func GetMediaType(request *http.Request) (MediaType, Parameters, error) {
@@ -236,8 +261,9 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 	resultParameters := Parameters{}
 	acceptableTypeFound := false
 
-	for count := 0; len(s) > 0; count++ {
-		if count > 0 {
+	for mediaTypeCount := 0; len(s) > 0; mediaTypeCount++ {
+		if mediaTypeCount > 0 {
+			// every media type after the first one must start with a comma
 			if s[0] != ',' {
 				break
 			}
@@ -252,7 +278,7 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 
 		parameters := make(Parameters)
 
-		for len(s) > 0 && s[0] == ';' {
+		for parameterCount := 0; len(s) > 0 && s[0] == ';'; parameterCount++ {
 			s = s[1:] // skip the semicolon
 
 			key, value, remaining, consumed := consumeParameter(s)
@@ -262,6 +288,17 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 			}
 
 			s = remaining
+
+			if key == "q" {
+				// q can only the first parameter
+				if parameterCount != 0 {
+					return MediaType{}, Parameters{}, InvalidExtensionParameterError
+				}
+
+				if !checkWeight(value) {
+					return MediaType{}, Parameters{}, InvalidWeightError
+				}
+			}
 
 			parameters[key] = value
 		}
