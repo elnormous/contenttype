@@ -228,7 +228,8 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 
 	s := acceptHeaders[0]
 
-	var result MediaType
+	resultMediaType := MediaType{}
+	resultParameters := Parameters{}
 	acceptableTypeFound := false
 
 	for count := 0; len(s) > 0; count++ {
@@ -245,9 +246,26 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 			return MediaType{}, Parameters{}, InvalidMediaTypeError
 		}
 
+		parameters := make(Parameters)
+
+		for len(s) > 0 && s[0] == ';' {
+			s = s[1:] // skip the semicolon
+
+			key, value, remaining, consumed := consumeParameter(s)
+
+			if !consumed {
+				return MediaType{}, Parameters{}, InvalidParameterError
+			}
+
+			s = remaining
+
+			parameters[key] = value
+		}
+
 		for _, availableMediaType := range availableMediaTypes {
 			if mediaType == availableMediaType {
-				result = mediaType
+				resultMediaType = mediaType
+				resultParameters = parameters
 				acceptableTypeFound = true
 			}
 		}
@@ -263,5 +281,5 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 		return MediaType{}, Parameters{}, NoAcceptableTypeFoundError
 	}
 
-	return result, Parameters{}, nil
+	return resultMediaType, resultParameters, nil
 }

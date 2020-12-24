@@ -101,6 +101,7 @@ func TestGetAcceptableMediaType(t *testing.T) {
 		{"Application/Json", []MediaType{{"application", "json"}}, MediaType{"application", "json"}, Parameters{}},
 		{"text/plain,application/xml", []MediaType{{"text", "plain"}}, MediaType{"text", "plain"}, Parameters{}},
 		{"text/plain,application/xml", []MediaType{{"application", "xml"}}, MediaType{"application", "xml"}, Parameters{}},
+		{"text/plain;q=1.0", []MediaType{{"text", "plain"}}, MediaType{"text", "plain"}, Parameters{"q": "1.0"}},
 	}
 
 	for _, testCase := range testCases {
@@ -138,6 +139,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 		{"/xml", []MediaType{{"application", "json"}}, InvalidMediaTypeError},
 		{"application/,", []MediaType{{"application", "json"}}, InvalidMediaTypeError},
 		{"a/b c", []MediaType{{"a", "b"}}, InvalidMediaRangeError},
+		{"a/b;c", []MediaType{{"a", "b"}}, InvalidParameterError},
 	}
 
 	for _, testCase := range testCases {
