@@ -280,8 +280,7 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 		parameters := make(Parameters)
 		currentWeight := "1"
 
-		extensionParameters := false
-
+		// media type parameters
 		for len(s) > 0 && s[0] == ';' {
 			s = s[1:] // skip the semicolon
 
@@ -294,21 +293,32 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 			s = remaining
 
 			if key == "q" {
-				// q must not be in extension parameter list
-				if extensionParameters {
-					return MediaType{}, Parameters{}, InvalidExtensionParameterError
-				}
-
 				if !checkWeight(value) {
 					return MediaType{}, Parameters{}, InvalidWeightError
 				}
 
 				currentWeight = value
-				// q is a separator between media type parameters and extension parameters
-				extensionParameters = true
+
+				parameters[key] = value
+				break // "q" parameter separates media type parameters from Accept extension parameters
 			}
 
 			parameters[key] = value
+		}
+
+		// extension parameters
+		for len(s) > 0 && s[0] == ';' {
+			s = s[1:] // skip the semicolon
+
+			key, value, remaining, consumed := consumeParameter(s)
+
+			if !consumed {
+				return MediaType{}, Parameters{}, InvalidParameterError
+			}
+
+			s = remaining
+
+			parameters[key] = value // TODO: store in a separate map
 		}
 
 		for _, availableMediaType := range availableMediaTypes {
