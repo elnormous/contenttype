@@ -259,6 +259,7 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 
 	resultMediaType := MediaType{}
 	resultParameters := Parameters{}
+	resultWeight := ""
 	acceptableTypeFound := false
 
 	for mediaTypeCount := 0; len(s) > 0; mediaTypeCount++ {
@@ -277,6 +278,7 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 		}
 
 		parameters := make(Parameters)
+		currentWeight := "1"
 
 		for parameterCount := 0; len(s) > 0 && s[0] == ';'; parameterCount++ {
 			s = s[1:] // skip the semicolon
@@ -298,6 +300,8 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 				if !checkWeight(value) {
 					return MediaType{}, Parameters{}, InvalidWeightError
 				}
+
+				currentWeight = value
 			}
 
 			parameters[key] = value
@@ -306,9 +310,14 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 		for _, availableMediaType := range availableMediaTypes {
 			if (mediaType[0] == "*" || mediaType[0] == availableMediaType[0]) &&
 				(mediaType[1] == "*" || mediaType[1] == availableMediaType[1]) {
-				resultMediaType = availableMediaType
-				resultParameters = parameters
-				acceptableTypeFound = true
+
+				if currentWeight > "0" && // 0 means "not acceptable"
+					(!acceptableTypeFound || currentWeight > resultWeight) {
+					resultMediaType = availableMediaType
+					resultParameters = parameters
+					resultWeight = currentWeight
+					acceptableTypeFound = true
+				}
 			}
 		}
 

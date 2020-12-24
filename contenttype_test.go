@@ -105,6 +105,7 @@ func TestGetAcceptableMediaType(t *testing.T) {
 		{"*/*", []MediaType{{"application", "json"}}, MediaType{"application", "json"}, Parameters{}},
 		{"application/*", []MediaType{{"application", "json"}}, MediaType{"application", "json"}, Parameters{}},
 		{"a/b;q=1.", []MediaType{{"a", "b"}}, MediaType{"a", "b"}, Parameters{"q": "1."}},
+		{"a/b;q=0.1,c/d;q=0.2", []MediaType{{"a", "b"}, {"c", "d"}}, MediaType{"c", "d"}, Parameters{"q": "0.2"}},
 	}
 
 	for _, testCase := range testCases {
@@ -150,6 +151,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 		{"a/b;q=1.0000", []MediaType{{"a", "b"}}, InvalidWeightError},
 		{"a/b;q=1.a", []MediaType{{"a", "b"}}, InvalidWeightError},
 		{"a/b;q=1.100", []MediaType{{"a", "b"}}, InvalidWeightError},
+		{"a/b;q=0", []MediaType{{"a", "b"}}, NoAcceptableTypeFoundError},
 	}
 
 	for _, testCase := range testCases {
