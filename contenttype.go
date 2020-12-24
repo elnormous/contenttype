@@ -129,6 +129,10 @@ func consumeMediaType(s string) (MediaType, string, bool) {
 		return MediaType{}, s, false
 	}
 
+	if mediaType[0] == "*" && mediaType[1] != "*" {
+		return MediaType{}, s, false
+	}
+
 	s = skipWhiteSpaces(s)
 
 	return mediaType, s, true
@@ -263,8 +267,9 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 		}
 
 		for _, availableMediaType := range availableMediaTypes {
-			if mediaType == availableMediaType {
-				resultMediaType = mediaType
+			if (mediaType[0] == "*" || mediaType[0] == availableMediaType[0]) &&
+				(mediaType[1] == "*" || mediaType[1] == availableMediaType[1]) {
+				resultMediaType = availableMediaType
 				resultParameters = parameters
 				acceptableTypeFound = true
 			}
