@@ -143,6 +143,40 @@ func consumeMediaType(s string) (MediaType, string, bool) {
 	return mediaType, s, true
 }
 
+func consumeParameter(s string) (string, string, string, bool) {
+	s = skipWhiteSpaces(s)
+
+	var ok bool
+	var key string
+	key, s, ok = consumeToken(s)
+	if !ok {
+		return "", "", s, false
+	}
+
+	if len(s) == 0 || s[0] != '=' {
+		return "", "", s, false
+	}
+
+	s = s[1:] // skip the equal sign
+
+	var value string
+	if len(s) > 0 && s[0] == '"' { // opening quote
+		value, s, ok = consumeQuotedString(s)
+		if !ok {
+			return "", "", s, false
+		}
+	} else {
+		value, s, ok = consumeToken(s)
+		if !ok {
+			return "", "", s, false
+		}
+	}
+
+	s = skipWhiteSpaces(s)
+
+	return key, value, s, true
+}
+
 func GetMediaType(request *http.Request) (MediaType, Parameters, error) {
 	// RFC 7231, 3.1.1.5. Content-Type
 	contentTypeHeaders := request.Header.Values("Content-Type")
@@ -161,37 +195,16 @@ func GetMediaType(request *http.Request) (MediaType, Parameters, error) {
 
 	for len(s) > 0 && s[0] == ';' {
 		s = s[1:] // skip the semicolon
-		s = skipWhiteSpaces(s)
 
-		var ok bool
-		var key string
-		key, s, ok = consumeToken(s)
-		if !ok {
+		key, value, remaining, consumed := consumeParameter(s)
+
+		if !consumed {
 			return MediaType{}, Parameters{}, InvalidParameterError
 		}
 
-		if len(s) == 0 || s[0] != '=' {
-			return MediaType{}, Parameters{}, InvalidParameterError
-		}
-
-		s = s[1:] // skip the equal sign
-
-		var value string
-		if len(s) > 0 && s[0] == '"' { // opening quote
-			value, s, ok = consumeQuotedString(s)
-			if !ok {
-				return MediaType{}, Parameters{}, InvalidParameterError
-			}
-		} else {
-			value, s, ok = consumeToken(s)
-			if !ok {
-				return MediaType{}, Parameters{}, InvalidParameterError
-			}
-		}
+		s = remaining
 
 		parameters[key] = value
-
-		s = skipWhiteSpaces(s)
 	}
 
 	if len(s) > 0 {
