@@ -59,10 +59,13 @@ func TestGetMediaTypeErrors(t *testing.T) {
 		{"Application", InvalidMediaTypeError},
 		{"/Application", InvalidMediaTypeError},
 		{"Application/", InvalidMediaTypeError},
+		{"a/b\x19", InvalidMediaTypeError},
 		{"Application/JSON/test", InvalidMediaTypeError},
 		{"application/xml;=bar ", InvalidParameterError},
 		{"application/xml; =bar ", InvalidParameterError},
 		{"application/xml;foo= ", InvalidParameterError},
+		{"a/b;c=\x19", InvalidParameterError},
+		{"a/b;c=\"\x19\"", InvalidParameterError},
 	}
 
 	for _, testCase := range testCases {
