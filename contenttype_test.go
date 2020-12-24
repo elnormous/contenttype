@@ -1,7 +1,6 @@
 package contenttype
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"reflect"
@@ -42,11 +41,11 @@ func TestGetMediaType(t *testing.T) {
 
 		result, parameters, mediaTypeError := GetMediaType(request)
 		if mediaTypeError != nil {
-			t.Errorf("Unexpected error for %s: %s", testCase.header, mediaTypeError.Error())
+			t.Errorf("Unexpected error \"%s\" for %s", mediaTypeError.Error(), testCase.header)
 		} else if result != testCase.result {
-			t.Errorf("Invalid content type, got %s, exptected %s", result, testCase.result)
+			t.Errorf("Invalid content type, got %s, exptected %s for %s", result, testCase.result, testCase.header)
 		} else if !reflect.DeepEqual(parameters, testCase.parameters) {
-			t.Errorf("Wrong parameters, got %v, expected %v", fmt.Sprint(parameters), fmt.Sprint(testCase.parameters))
+			t.Errorf("Wrong parameters, got %v, expected %v for %s", parameters, testCase.parameters, testCase.header)
 		}
 	}
 }
@@ -85,7 +84,7 @@ func TestGetMediaTypeErrors(t *testing.T) {
 		if mediaTypeError == nil {
 			t.Errorf("Expected an error for %s", testCase.header)
 		} else if testCase.err != mediaTypeError {
-			t.Errorf("Unexpected error \"%s\", expected \"%s\"", mediaTypeError.Error(), testCase.err.Error())
+			t.Errorf("Unexpected error \"%s\", expected \"%s\" for %s", mediaTypeError.Error(), testCase.err.Error(), testCase.header)
 		}
 	}
 }
@@ -117,11 +116,11 @@ func TestGetAcceptableMediaType(t *testing.T) {
 		result, parameters, mediaTypeError := GetAcceptableMediaType(request, testCase.availableMediaTypes)
 
 		if mediaTypeError != nil {
-			t.Errorf("Unexpected error for %s: %s", testCase.header, mediaTypeError.Error())
+			t.Errorf("Unexpected error \"%s\" for %s", mediaTypeError.Error(), testCase.header)
 		} else if result != testCase.result {
-			t.Errorf("Invalid content type, got %s, exptected %s", result, testCase.result)
+			t.Errorf("Invalid content type, got %s, exptected %s for %s", result, testCase.result, testCase.header)
 		} else if !reflect.DeepEqual(parameters, testCase.parameters) {
-			t.Errorf("Wrong parameters, got %v, expected %v", fmt.Sprint(parameters), fmt.Sprint(testCase.parameters))
+			t.Errorf("Wrong parameters, got %v, expected %v for %s", parameters, testCase.parameters, testCase.header)
 		}
 	}
 }
@@ -135,7 +134,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 		{"", []MediaType{}, NoAvailableTypeGivenError},
 		{"application/xml", []MediaType{{"application", "json"}}, NoAcceptableTypeFoundError},
 		{"application/xml/", []MediaType{{"application", "json"}}, InvalidMediaRangeError},
-		{"application/xml,", []MediaType{{"application", "json"}}, InvalidMediaRangeError},
+		{"application/xml,", []MediaType{{"application", "json"}}, InvalidMediaTypeError},
 		{"/xml", []MediaType{{"application", "json"}}, InvalidMediaTypeError},
 		{"application/,", []MediaType{{"application", "json"}}, InvalidMediaTypeError},
 	}
@@ -154,7 +153,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 		if mediaTypeError == nil {
 			t.Errorf("Expected an error for %s", testCase.header)
 		} else if testCase.err != mediaTypeError {
-			t.Errorf("Unexpected error \"%s\", expected \"%s\"", mediaTypeError.Error(), testCase.err.Error())
+			t.Errorf("Unexpected error \"%s\", expected \"%s\" for %s", mediaTypeError.Error(), testCase.err.Error(), testCase.header)
 		}
 	}
 }

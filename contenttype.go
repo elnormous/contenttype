@@ -228,7 +228,14 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 
 	s := acceptHeaders[0]
 
-	for len(s) > 0 {
+	for count := 0; len(s) > 0; count++ {
+		if count > 0 {
+			if s[0] != ',' {
+				return MediaType{}, Parameters{}, InvalidMediaRangeError
+			}
+			s = s[1:] // skip the comma
+		}
+
 		mediaType, remaining, consumed := consumeMediaType(s)
 		s = remaining
 		if !consumed {
@@ -241,13 +248,7 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 			}
 		}
 
-		if len(s) > 0 {
-			if s[0] != ',' || len(s) <= 2 {
-				return MediaType{}, Parameters{}, InvalidMediaRangeError
-			}
-
-			s = s[1:] // skip the comma
-		}
+		s = skipWhiteSpaces(s)
 	}
 
 	if len(s) > 0 {
