@@ -113,7 +113,7 @@ func consumeQuotedString(s string) (token, remaining string, consumed bool) {
 	return strings.ToLower(stringBuilder.String()), s[index:], true
 }
 
-func consumeMediaType(s string) (string, string, string, bool) {
+func consumeType(s string) (string, string, string, bool) {
 	// RFC 7231, 3.1.1.1. Media Type
 	s = skipWhiteSpaces(s)
 
@@ -222,7 +222,7 @@ func GetMediaType(request *http.Request) (MediaType, error) {
 	mediaType := MediaType{}
 	var consumed bool
 
-	mediaType.Type, mediaType.Subtype, s, consumed = consumeMediaType(s)
+	mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s)
 
 	if !consumed {
 		return MediaType{}, InvalidMediaTypeError
@@ -280,7 +280,7 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 
 		mediaType := MediaType{}
 		var consumed bool
-		mediaType.Type, mediaType.Subtype, s, consumed = consumeMediaType(s)
+		mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s)
 		if !consumed {
 			return MediaType{}, InvalidMediaTypeError
 		}
@@ -299,18 +299,16 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 				return MediaType{}, InvalidParameterError
 			}
 
+			parameters[key] = value
+
 			if key == "q" {
 				if !checkWeight(value) {
 					return MediaType{}, InvalidWeightError
 				}
 
 				currentWeight = value
-
-				parameters[key] = value
 				break // "q" parameter separates media type parameters from Accept extension parameters
 			}
-
-			parameters[key] = value
 		}
 
 		// extension parameters
