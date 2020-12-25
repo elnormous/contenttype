@@ -9,10 +9,10 @@ import (
 )
 
 func handleRequest(responseWriter http.ResponseWriter, request *http.Request) {
-    mediaType, parameters, err := contenttype.GetMediaType(request)
+    mediaType, err := contenttype.GetMediaType(request)
     if err != nil {
         // handle the error
     }
-    log.Println("Media type:", result, "parameters:", parameters)
+    log.Println("Media type:", result.Type, result.Subtype, "parameters:", result.Parameters)
 }
 ```

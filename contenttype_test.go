@@ -7,6 +7,30 @@ import (
 	"testing"
 )
 
+func TestNewMediaType(t *testing.T) {
+	testCases := []struct {
+		value  string
+		result MediaType
+	}{
+		{"", MediaType{}},
+		{"application/json", MediaType{"application", "json", Parameters{}}},
+		{"a/b;c=d", MediaType{"a", "b", Parameters{"c": "d"}}},
+		{"/b", MediaType{}},
+		{"a/", MediaType{}},
+		{"a/b;c", MediaType{}},
+	}
+
+	for _, testCase := range testCases {
+		result := NewMediaType(testCase.value)
+
+		if result.Type != testCase.result.Type || result.Subtype != testCase.result.Subtype {
+			t.Errorf("Invalid content type, got %s/%s, exptected %s/%s for %s", result.Type, result.Subtype, testCase.result.Type, testCase.result.Subtype, testCase.value)
+		} else if !reflect.DeepEqual(result.Parameters, testCase.result.Parameters) {
+			t.Errorf("Wrong parameters, got %v, expected %v for %s", result.Parameters, testCase.result.Parameters, testCase.value)
+		}
+	}
+}
+
 func TestGetMediaType(t *testing.T) {
 	testCases := []struct {
 		header string

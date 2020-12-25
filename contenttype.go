@@ -210,6 +210,34 @@ func checkWeight(s string) bool {
 	return true
 }
 
+func NewMediaType(s string) MediaType {
+	mediaType := MediaType{}
+	var consumed bool
+	mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s)
+
+	if !consumed {
+		return MediaType{}
+	}
+
+	mediaType.Parameters = make(Parameters)
+
+	for len(s) > 0 && s[0] == ';' {
+		s = s[1:] // skip the semicolon
+
+		key, value, remaining, consumed := consumeParameter(s)
+
+		if !consumed {
+			return MediaType{}
+		}
+
+		s = remaining
+
+		mediaType.Parameters[key] = value
+	}
+
+	return mediaType
+}
+
 func GetMediaType(request *http.Request) (MediaType, error) {
 	// RFC 7231, 3.1.1.5. Content-Type
 	contentTypeHeaders := request.Header.Values("Content-Type")
