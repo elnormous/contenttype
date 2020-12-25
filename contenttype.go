@@ -14,8 +14,13 @@ var NoAvailableTypeGivenError = errors.New("No available type given")
 var NoAcceptableTypeFoundError = errors.New("No acceptable type found")
 var InvalidWeightError = errors.New("Invalid wieght")
 
-type MediaType = [2]string
 type Parameters = map[string]string
+
+type MediaType struct {
+	Type       string
+	Subtype    string
+	Parameters Parameters
+}
 
 func isWhiteSpaceChar(c byte) bool {
 	// RFC 7230, 3.2.3. Whitespace
@@ -108,36 +113,35 @@ func consumeQuotedString(s string) (token, remaining string, consumed bool) {
 	return strings.ToLower(stringBuilder.String()), s[index:], true
 }
 
-func consumeMediaType(s string) (MediaType, string, bool) {
+func consumeMediaType(s string) (string, string, string, bool) {
 	// RFC 7231, 3.1.1.1. Media Type
 	s = skipWhiteSpaces(s)
 
-	var mediaType MediaType
-
+	var t, subt string
 	var ok bool
-	mediaType[0], s, ok = consumeToken(s)
+	t, s, ok = consumeToken(s)
 	if !ok {
-		return MediaType{}, s, false
+		return "", "", s, false
 	}
 
 	if len(s) == 0 || s[0] != '/' {
-		return MediaType{}, s, false
+		return "", "", s, false
 	}
 
 	s = s[1:] // skip the slash
 
-	mediaType[1], s, ok = consumeToken(s)
+	subt, s, ok = consumeToken(s)
 	if !ok {
-		return MediaType{}, s, false
+		return "", "", s, false
 	}
 
-	if mediaType[0] == "*" && mediaType[1] != "*" {
-		return MediaType{}, s, false
+	if t == "*" && subt != "*" {
+		return "", "", s, false
 	}
 
 	s = skipWhiteSpaces(s)
 
-	return mediaType, s, true
+	return t, subt, s, true
 }
 
 func consumeParameter(s string) (string, string, string, bool) {
@@ -206,21 +210,25 @@ func checkWeight(s string) bool {
 	return true
 }
 
-func GetMediaType(request *http.Request) (MediaType, Parameters, error) {
+func GetMediaType(request *http.Request) (MediaType, error) {
 	// RFC 7231, 3.1.1.5. Content-Type
 	contentTypeHeaders := request.Header.Values("Content-Type")
 
 	if len(contentTypeHeaders) == 0 {
-		return MediaType{}, Parameters{}, nil
+		return MediaType{}, nil
 	}
 
-	mediaType, s, consumed := consumeMediaType(contentTypeHeaders[0])
+	s := contentTypeHeaders[0]
+	mediaType := MediaType{}
+	var consumed bool
+
+	mediaType.Type, mediaType.Subtype, s, consumed = consumeMediaType(s)
 
 	if !consumed {
-		return MediaType{}, Parameters{}, InvalidMediaTypeError
+		return MediaType{}, InvalidMediaTypeError
 	}
 
-	parameters := make(Parameters)
+	mediaType.Parameters = make(Parameters)
 
 	for len(s) > 0 && s[0] == ';' {
 		s = s[1:] // skip the semicolon
@@ -228,37 +236,36 @@ func GetMediaType(request *http.Request) (MediaType, Parameters, error) {
 		key, value, remaining, consumed := consumeParameter(s)
 
 		if !consumed {
-			return MediaType{}, Parameters{}, InvalidParameterError
+			return MediaType{}, InvalidParameterError
 		}
 
 		s = remaining
 
-		parameters[key] = value
+		mediaType.Parameters[key] = value
 	}
 
 	if len(s) > 0 {
-		return MediaType{}, Parameters{}, InvalidMediaTypeError
+		return MediaType{}, InvalidMediaTypeError
 	}
 
-	return mediaType, parameters, nil
+	return mediaType, nil
 }
 
-func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaType) (MediaType, Parameters, error) {
+func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaType) (MediaType, error) {
 	// RFC 7231, 5.3.2. Accept
 	if len(availableMediaTypes) == 0 {
-		return MediaType{}, Parameters{}, NoAvailableTypeGivenError
+		return MediaType{}, NoAvailableTypeGivenError
 	}
 
 	acceptHeaders := request.Header.Values("Accept")
 
 	if len(acceptHeaders) == 0 {
-		return availableMediaTypes[0], Parameters{}, nil
+		return availableMediaTypes[0], nil
 	}
 
 	s := acceptHeaders[0]
 
 	resultMediaType := MediaType{}
-	resultParameters := Parameters{}
 	resultWeight := ""
 	acceptableTypeFound := false
 
@@ -271,10 +278,11 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 			s = s[1:] // skip the comma
 		}
 
-		mediaType, remaining, consumed := consumeMediaType(s)
-		s = remaining
+		mediaType := MediaType{}
+		var consumed bool
+		mediaType.Type, mediaType.Subtype, s, consumed = consumeMediaType(s)
 		if !consumed {
-			return MediaType{}, Parameters{}, InvalidMediaTypeError
+			return MediaType{}, InvalidMediaTypeError
 		}
 
 		parameters := make(Parameters)
@@ -284,17 +292,16 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 		for len(s) > 0 && s[0] == ';' {
 			s = s[1:] // skip the semicolon
 
-			key, value, remaining, consumed := consumeParameter(s)
+			var key, value string
+			key, value, s, consumed = consumeParameter(s)
 
 			if !consumed {
-				return MediaType{}, Parameters{}, InvalidParameterError
+				return MediaType{}, InvalidParameterError
 			}
-
-			s = remaining
 
 			if key == "q" {
 				if !checkWeight(value) {
-					return MediaType{}, Parameters{}, InvalidWeightError
+					return MediaType{}, InvalidWeightError
 				}
 
 				currentWeight = value
@@ -313,7 +320,7 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 			key, value, remaining, consumed := consumeParameter(s)
 
 			if !consumed {
-				return MediaType{}, Parameters{}, InvalidParameterError
+				return MediaType{}, InvalidParameterError
 			}
 
 			s = remaining
@@ -322,13 +329,13 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 		}
 
 		for _, availableMediaType := range availableMediaTypes {
-			if (mediaType[0] == "*" || mediaType[0] == availableMediaType[0]) &&
-				(mediaType[1] == "*" || mediaType[1] == availableMediaType[1]) {
+			if (mediaType.Type == "*" || mediaType.Type == availableMediaType.Type) &&
+				(mediaType.Subtype == "*" || mediaType.Subtype == availableMediaType.Subtype) {
 
 				if currentWeight > "0" && // 0 means "not acceptable"
 					(!acceptableTypeFound || currentWeight > resultWeight) {
 					resultMediaType = availableMediaType
-					resultParameters = parameters
+					resultMediaType.Parameters = parameters
 					resultWeight = currentWeight
 					acceptableTypeFound = true
 				}
@@ -339,12 +346,12 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 	}
 
 	if len(s) > 0 {
-		return MediaType{}, Parameters{}, InvalidMediaRangeError
+		return MediaType{}, InvalidMediaRangeError
 	}
 
 	if !acceptableTypeFound {
-		return MediaType{}, Parameters{}, NoAcceptableTypeFoundError
+		return MediaType{}, NoAcceptableTypeFoundError
 	}
 
-	return resultMediaType, resultParameters, nil
+	return resultMediaType, nil
 }
