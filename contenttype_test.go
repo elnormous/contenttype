@@ -142,12 +142,12 @@ func TestGetAcceptableMediaType(t *testing.T) {
 			request.Header.Set("Accept", testCase.header)
 		}
 
-		result, mediaTypeError := GetAcceptableMediaType(request, testCase.availableMediaTypes)
+		result, _, mediaTypeError := GetAcceptableMediaType(request, testCase.availableMediaTypes)
 
 		if mediaTypeError != nil {
 			t.Errorf("Unexpected error \"%s\" for %s", mediaTypeError.Error(), testCase.header)
 		} else if result.Type != testCase.result.Type || result.Subtype != testCase.result.Subtype {
-			t.Errorf("Invalid content type, got %s/%s, exptected %s for %s/%s", result.Type, result.Subtype, testCase.result.Type, testCase.result.Subtype, testCase.header)
+			t.Errorf("Invalid content type, got %s/%s, exptected %s/%s for %s", result.Type, result.Subtype, testCase.result.Type, testCase.result.Subtype, testCase.header)
 		} else if !reflect.DeepEqual(result.Parameters, testCase.result.Parameters) {
 			t.Errorf("Wrong parameters, got %v, expected %v for %s", result.Parameters, testCase.result.Parameters, testCase.header)
 		}
@@ -187,7 +187,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 			request.Header.Set("Accept", testCase.header)
 		}
 
-		_, mediaTypeError := GetAcceptableMediaType(request, testCase.availableMediaTypes)
+		_, _, mediaTypeError := GetAcceptableMediaType(request, testCase.availableMediaTypes)
 		if mediaTypeError == nil {
 			t.Errorf("Expected an error for %s", testCase.header)
 		} else if testCase.err != mediaTypeError {
