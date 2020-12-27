@@ -101,7 +101,6 @@ func consumeQuotedString(s string) (token, remaining string, consumed bool) {
 			if len(s) <= index || !isQuotedPairChar(s[index]) {
 				return "", s, false
 			}
-
 			stringBuilder.WriteByte(s[index])
 		} else if isQuotedTextChar(s[index]) {
 			stringBuilder.WriteByte(s[index])
@@ -118,9 +117,9 @@ func consumeType(s string) (string, string, string, bool) {
 	s = skipWhiteSpaces(s)
 
 	var t, subt string
-	var ok bool
-	t, s, ok = consumeToken(s)
-	if !ok {
+	var consumed bool
+	t, s, consumed = consumeToken(s)
+	if !consumed {
 		return "", "", s, false
 	}
 
@@ -130,8 +129,8 @@ func consumeType(s string) (string, string, string, bool) {
 
 	s = s[1:] // skip the slash
 
-	subt, s, ok = consumeToken(s)
-	if !ok {
+	subt, s, consumed = consumeToken(s)
+	if !consumed {
 		return "", "", s, false
 	}
 
@@ -148,10 +147,10 @@ func consumeParameter(s string) (string, string, string, bool) {
 	// RFC 7231, 3.1.1.1. Media Type
 	s = skipWhiteSpaces(s)
 
-	var ok bool
+	var consumed bool
 	var key string
-	key, s, ok = consumeToken(s)
-	if !ok {
+	key, s, consumed = consumeToken(s)
+	if !consumed {
 		return "", "", s, false
 	}
 
@@ -165,8 +164,8 @@ func consumeParameter(s string) (string, string, string, bool) {
 	if len(s) > 0 && s[0] == '"' {
 		s = s[1:] // skip the opening quote
 
-		value, s, ok = consumeQuotedString(s)
-		if !ok {
+		value, s, consumed = consumeQuotedString(s)
+		if !consumed {
 			return "", "", s, false
 		}
 
@@ -177,8 +176,8 @@ func consumeParameter(s string) (string, string, string, bool) {
 		s = s[1:] // skip the closing quote
 
 	} else {
-		value, s, ok = consumeToken(s)
-		if !ok {
+		value, s, consumed = consumeToken(s)
+		if !consumed {
 			return "", "", s, false
 		}
 	}
@@ -239,7 +238,7 @@ func compareMediaTypes(checkMediaType, mediaType MediaType) bool {
 }
 
 func getPrecedence(checkMediaType, mediaType MediaType) bool {
-	if mediaType.Type == "" || mediaType.Subtype == "" { // not set
+	if len(mediaType.Type) == 0 || len(mediaType.Subtype) == 0 { // not set
 		return true
 	}
 
@@ -256,7 +255,6 @@ func NewMediaType(s string) MediaType {
 	mediaType := MediaType{}
 	var consumed bool
 	mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s)
-
 	if !consumed {
 		return MediaType{}
 	}
@@ -267,7 +265,6 @@ func NewMediaType(s string) MediaType {
 		s = s[1:] // skip the semicolon
 
 		key, value, remaining, consumed := consumeParameter(s)
-
 		if !consumed {
 			return MediaType{}
 		}
@@ -302,7 +299,6 @@ func (mediaType *MediaType) String() string {
 func GetMediaType(request *http.Request) (MediaType, error) {
 	// RFC 7231, 3.1.1.5. Content-Type
 	contentTypeHeaders := request.Header.Values("Content-Type")
-
 	if len(contentTypeHeaders) == 0 {
 		return MediaType{}, nil
 	}
@@ -345,7 +341,6 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 	}
 
 	acceptHeaders := request.Header.Values("Accept")
-
 	if len(acceptHeaders) == 0 {
 		return availableMediaTypes[0], Parameters{}, nil
 	}
@@ -384,7 +379,6 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 
 			var key, value string
 			key, value, s, consumed = consumeParameter(s)
-
 			if !consumed {
 				return MediaType{}, Parameters{}, InvalidParameterError
 			}
@@ -405,7 +399,6 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 			s = s[1:] // skip the semicolon
 
 			key, value, remaining, consumed := consumeParameter(s)
-
 			if !consumed {
 				return MediaType{}, Parameters{}, InvalidParameterError
 			}
@@ -435,12 +428,12 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 
 	resultIndex := -1
 	for i := 0; i < len(availableMediaTypes); i++ {
-		if resultIndex == -1 {
-			if weights[i].weight > 0 {
+		if resultIndex != -1 {
+			if weights[i].weight > weights[resultIndex].weight ||
+				(weights[i].weight == weights[resultIndex].weight && weights[i].order < weights[resultIndex].order) {
 				resultIndex = i
 			}
-		} else if weights[i].weight > weights[resultIndex].weight ||
-			(weights[i].weight == weights[resultIndex].weight && weights[i].order < weights[resultIndex].order) {
+		} else if weights[i].weight > 0 {
 			resultIndex = i
 		}
 	}
