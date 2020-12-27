@@ -117,44 +117,46 @@ func TestGetAcceptableMediaType(t *testing.T) {
 		header              string
 		availableMediaTypes []MediaType
 		result              MediaType
+		extensionParameters Parameters
 	}{
-		{"", []MediaType{{"application", "json", Parameters{}}}, MediaType{"application", "json", Parameters{}}},
-		{"application/json", []MediaType{{"application", "json", Parameters{}}}, MediaType{"application", "json", Parameters{}}},
-		{"Application/Json", []MediaType{{"application", "json", Parameters{}}}, MediaType{"application", "json", Parameters{}}},
-		{"text/plain,application/xml", []MediaType{{"text", "plain", Parameters{}}}, MediaType{"text", "plain", Parameters{}}},
-		{"text/plain,application/xml", []MediaType{{"application", "xml", Parameters{}}}, MediaType{"application", "xml", Parameters{}}},
-		{"text/plain;q=1.0", []MediaType{{"text", "plain", Parameters{}}}, MediaType{"text", "plain", Parameters{}}},
-		{"*/*", []MediaType{{"application", "json", Parameters{}}}, MediaType{"application", "json", Parameters{}}},
-		{"application/*", []MediaType{{"application", "json", Parameters{}}}, MediaType{"application", "json", Parameters{}}},
-		{"a/b;q=1.", []MediaType{{"a", "b", Parameters{}}}, MediaType{"a", "b", Parameters{}}},
+		{"", []MediaType{{"application", "json", Parameters{}}}, MediaType{"application", "json", Parameters{}}, Parameters{}},
+		{"application/json", []MediaType{{"application", "json", Parameters{}}}, MediaType{"application", "json", Parameters{}}, Parameters{}},
+		{"Application/Json", []MediaType{{"application", "json", Parameters{}}}, MediaType{"application", "json", Parameters{}}, Parameters{}},
+		{"text/plain,application/xml", []MediaType{{"text", "plain", Parameters{}}}, MediaType{"text", "plain", Parameters{}}, Parameters{}},
+		{"text/plain,application/xml", []MediaType{{"application", "xml", Parameters{}}}, MediaType{"application", "xml", Parameters{}}, Parameters{}},
+		{"text/plain;q=1.0", []MediaType{{"text", "plain", Parameters{}}}, MediaType{"text", "plain", Parameters{}}, Parameters{}},
+		{"*/*", []MediaType{{"application", "json", Parameters{}}}, MediaType{"application", "json", Parameters{}}, Parameters{}},
+		{"application/*", []MediaType{{"application", "json", Parameters{}}}, MediaType{"application", "json", Parameters{}}, Parameters{}},
+		{"a/b;q=1.", []MediaType{{"a", "b", Parameters{}}}, MediaType{"a", "b", Parameters{}}, Parameters{}},
 		{"a/b;q=0.1,c/d;q=0.2", []MediaType{
 			{"a", "b", Parameters{}},
 			{"c", "d", Parameters{}},
-		}, MediaType{"c", "d", Parameters{}}},
+		}, MediaType{"c", "d", Parameters{}}, Parameters{}},
 		{"a/b;q=0.2,c/d;q=0.2", []MediaType{
 			{"a", "b", Parameters{}},
 			{"c", "d", Parameters{}},
-		}, MediaType{"a", "b", Parameters{}}},
+		}, MediaType{"a", "b", Parameters{}}, Parameters{}},
 		{"a/*;q=0.2,a/c", []MediaType{
 			{"a", "b", Parameters{}},
 			{"a", "c", Parameters{}},
-		}, MediaType{"a", "c", Parameters{}}},
+		}, MediaType{"a", "c", Parameters{}}, Parameters{}},
 		{"a/b,a/a", []MediaType{
 			{"a", "a", Parameters{}},
 			{"a", "b", Parameters{}},
-		}, MediaType{"a", "b", Parameters{}}},
+		}, MediaType{"a", "b", Parameters{}}, Parameters{}},
 		{"a/*", []MediaType{
 			{"a", "a", Parameters{}},
 			{"a", "b", Parameters{}},
-		}, MediaType{"a", "a", Parameters{}}},
+		}, MediaType{"a", "a", Parameters{}}, Parameters{}},
 		{"a/a;q=0.2,a/*", []MediaType{
 			{"a", "a", Parameters{}},
 			{"a", "b", Parameters{}},
-		}, MediaType{"a", "b", Parameters{}}},
+		}, MediaType{"a", "b", Parameters{}}, Parameters{}},
 		{"a/a;q=0.2,a/a;c=d", []MediaType{
 			{"a", "a", Parameters{}},
 			{"a", "a", Parameters{"c": "d"}},
-		}, MediaType{"a", "a", Parameters{"c": "d"}}},
+		}, MediaType{"a", "a", Parameters{"c": "d"}}, Parameters{}},
+		{"a/b;q=1;e=e", []MediaType{{"a", "b", Parameters{}}}, MediaType{"a", "b", Parameters{}}, Parameters{"e": "e"}},
 	}
 
 	for _, testCase := range testCases {
@@ -167,7 +169,7 @@ func TestGetAcceptableMediaType(t *testing.T) {
 			request.Header.Set("Accept", testCase.header)
 		}
 
-		result, _, mediaTypeError := GetAcceptableMediaType(request, testCase.availableMediaTypes)
+		result, extensionParameters, mediaTypeError := GetAcceptableMediaType(request, testCase.availableMediaTypes)
 
 		if mediaTypeError != nil {
 			t.Errorf("Unexpected error \"%s\" for %s", mediaTypeError.Error(), testCase.header)
@@ -175,6 +177,8 @@ func TestGetAcceptableMediaType(t *testing.T) {
 			t.Errorf("Invalid content type, got %s/%s, exptected %s/%s for %s", result.Type, result.Subtype, testCase.result.Type, testCase.result.Subtype, testCase.header)
 		} else if !reflect.DeepEqual(result.Parameters, testCase.result.Parameters) {
 			t.Errorf("Wrong parameters, got %v, expected %v for %s", result.Parameters, testCase.result.Parameters, testCase.header)
+		} else if !reflect.DeepEqual(extensionParameters, testCase.extensionParameters) {
+			t.Errorf("Wrong extension parameters, got %v, expected %v for %s", extensionParameters, testCase.extensionParameters, testCase.header)
 		}
 	}
 }
@@ -200,6 +204,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 		{"a/b;q=1.a", []MediaType{{"a", "b", Parameters{}}}, InvalidWeightError},
 		{"a/b;q=1.100", []MediaType{{"a", "b", Parameters{}}}, InvalidWeightError},
 		{"a/b;q=0", []MediaType{{"a", "b", Parameters{}}}, NoAcceptableTypeFoundError},
+		{"a/a;q=1;ext=", []MediaType{{"a", "a", Parameters{}}}, InvalidParameterError},
 	}
 
 	for _, testCase := range testCases {
