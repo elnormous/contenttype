@@ -72,6 +72,7 @@ func isQuotedPairChar(c byte) bool {
 }
 
 func skipWhiteSpaces(s string) string {
+	// RFC 7230, 3.2.3. Whitespace
 	for i := 0; i < len(s); i++ {
 		if !isWhiteSpaceChar(s[i]) {
 			return s[i:]
@@ -82,6 +83,7 @@ func skipWhiteSpaces(s string) string {
 }
 
 func consumeToken(s string) (token, remaining string, consumed bool) {
+	// RFC 7230, 3.2.6. Field Value Components
 	for i := 0; i < len(s); i++ {
 		if !isTokenChar(s[i]) {
 			return strings.ToLower(s[:i]), s[i:], i > 0
@@ -188,6 +190,7 @@ func consumeParameter(s string) (string, string, string, bool) {
 }
 
 func getWeight(s string) (int, bool) {
+	// RFC 7231, 5.3.1. Quality Values
 	result := 0
 	multiplier := 1000
 	for i := 0; i < len(s); i++ {
