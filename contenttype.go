@@ -310,9 +310,7 @@ func GetMediaType(request *http.Request) (MediaType, error) {
 	s := contentTypeHeaders[0]
 	mediaType := MediaType{}
 	var consumed bool
-
 	mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s)
-
 	if !consumed {
 		return MediaType{}, InvalidMediaTypeError
 	}
@@ -323,7 +321,6 @@ func GetMediaType(request *http.Request) (MediaType, error) {
 		s = s[1:] // skip the semicolon
 
 		key, value, remaining, consumed := consumeParameter(s)
-
 		if !consumed {
 			return MediaType{}, InvalidParameterError
 		}
@@ -333,6 +330,7 @@ func GetMediaType(request *http.Request) (MediaType, error) {
 		mediaType.Parameters[key] = value
 	}
 
+	// there must not be anything left after parsing the header
 	if len(s) > 0 {
 		return MediaType{}, InvalidMediaTypeError
 	}
@@ -430,28 +428,26 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 		s = skipWhiteSpaces(s)
 	}
 
+	// there must not be anything left after parsing the header
 	if len(s) > 0 {
 		return MediaType{}, Parameters{}, InvalidMediaRangeError
 	}
 
-	resultMediaType := MediaType{}
-	resultExtensionParameters := make(Parameters)
-	resultWeight := 0
-	resultOrder := -1
-
+	resultIndex := -1
 	for i := 0; i < len(availableMediaTypes); i++ {
-		if weights[i].weight > resultWeight ||
-			(weights[i].weight == resultWeight && weights[i].order < resultOrder) {
-			resultMediaType = availableMediaTypes[i]
-			resultExtensionParameters = weights[i].extensionParameters
-			resultWeight = weights[i].weight
-			resultOrder = weights[i].order
+		if resultIndex == -1 {
+			if weights[i].weight > 0 {
+				resultIndex = i
+			}
+		} else if weights[i].weight > weights[resultIndex].weight ||
+			(weights[i].weight == weights[resultIndex].weight && weights[i].order < weights[resultIndex].order) {
+			resultIndex = i
 		}
 	}
 
-	if resultWeight == 0 {
+	if resultIndex == -1 {
 		return MediaType{}, Parameters{}, NoAcceptableTypeFoundError
 	}
 
-	return resultMediaType, resultExtensionParameters, nil
+	return availableMediaTypes[resultIndex], weights[resultIndex].extensionParameters, nil
 }
