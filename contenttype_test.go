@@ -123,13 +123,34 @@ func TestGetAcceptableMediaType(t *testing.T) {
 		{"Application/Json", []MediaType{{"application", "json", Parameters{}}}, MediaType{"application", "json", Parameters{}}},
 		{"text/plain,application/xml", []MediaType{{"text", "plain", Parameters{}}}, MediaType{"text", "plain", Parameters{}}},
 		{"text/plain,application/xml", []MediaType{{"application", "xml", Parameters{}}}, MediaType{"application", "xml", Parameters{}}},
-		{"text/plain;q=1.0", []MediaType{{"text", "plain", Parameters{}}}, MediaType{"text", "plain", Parameters{"q": "1.0"}}},
+		{"text/plain;q=1.0", []MediaType{{"text", "plain", Parameters{}}}, MediaType{"text", "plain", Parameters{}}},
 		{"*/*", []MediaType{{"application", "json", Parameters{}}}, MediaType{"application", "json", Parameters{}}},
 		{"application/*", []MediaType{{"application", "json", Parameters{}}}, MediaType{"application", "json", Parameters{}}},
-		{"a/b;q=1.", []MediaType{{"a", "b", Parameters{}}}, MediaType{"a", "b", Parameters{"q": "1."}}},
-		{"a/b;q=0.1,c/d;q=0.2", []MediaType{{"a", "b", Parameters{}}, {"c", "d", Parameters{}}}, MediaType{"c", "d", Parameters{"q": "0.2"}}},
-		{"a/b;q=0.2,c/d;q=0.2", []MediaType{{"a", "b", Parameters{}}, {"c", "d", Parameters{}}}, MediaType{"a", "b", Parameters{"q": "0.2"}}},
-		{"a/*;q=0.2,a/c", []MediaType{{"a", "b", Parameters{}}, {"a", "c", Parameters{}}}, MediaType{"a", "c", Parameters{}}},
+		{"a/b;q=1.", []MediaType{{"a", "b", Parameters{}}}, MediaType{"a", "b", Parameters{}}},
+		{"a/b;q=0.1,c/d;q=0.2", []MediaType{
+			{"a", "b", Parameters{}},
+			{"c", "d", Parameters{}},
+		}, MediaType{"c", "d", Parameters{}}},
+		{"a/b;q=0.2,c/d;q=0.2", []MediaType{
+			{"a", "b", Parameters{}},
+			{"c", "d", Parameters{}},
+		}, MediaType{"a", "b", Parameters{}}},
+		{"a/*;q=0.2,a/c", []MediaType{
+			{"a", "b", Parameters{}},
+			{"a", "c", Parameters{}},
+		}, MediaType{"a", "c", Parameters{}}},
+		{"a/b,a/a", []MediaType{
+			{"a", "a", Parameters{}},
+			{"a", "b", Parameters{}},
+		}, MediaType{"a", "b", Parameters{}}},
+		{"a/*", []MediaType{
+			{"a", "a", Parameters{}},
+			{"a", "b", Parameters{}},
+		}, MediaType{"a", "a", Parameters{}}},
+		{"a/a;q=0.2,a/*", []MediaType{
+			{"a", "a", Parameters{}},
+			{"a", "b", Parameters{}},
+		}, MediaType{"a", "b", Parameters{}}},
 	}
 
 	for _, testCase := range testCases {

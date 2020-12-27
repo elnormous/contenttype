@@ -188,26 +188,67 @@ func consumeParameter(s string) (string, string, string, bool) {
 	return key, value, s, true
 }
 
-func checkWeight(s string) bool {
-	// RFC 7231, 5.3.1. Quality Values
-	if len(s) == 0 || (s[0] != '0' && s[0] != '1') {
-		return false
+func getWeight(s string) (int, bool) {
+	result := 0
+	multiplier := 1000
+	for i := 0; i < len(s); i++ {
+		if i == 0 {
+			// the first character must be 0 or 1
+			if s[i] != '0' && s[i] != '1' {
+				return 0, false
+			}
+
+			result = int(s[i]-'0') * multiplier
+			multiplier /= 10
+		} else if i == 1 {
+			// the second character must be a dot
+			if s[i] != '.' {
+				return 0, false
+			}
+		} else if i > 4 { // the string can not be longer than 5 characters
+			return 0, false
+		} else {
+			// the remaining characters must be digits and the value can not be creater than 1.000
+			if (s[0] == '1' && s[i] != '0') ||
+				(s[i] < '0' || s[i] > '9') {
+				return 0, false
+			}
+
+			result += int(s[i]-'0') * multiplier
+			multiplier /= 10
+		}
 	}
 
-	if len(s) > 1 {
-		if s[1] != '.' || len(s) > 5 {
-			return false
-		}
+	return result, true
+}
 
-		for index := 2; index < len(s); index++ {
-			if !isDigitChar(s[index]) ||
-				(s[0] == '1' && s[index] != '0') { // weight can not be greater than 1
+func compareMediaTypes(check, mediaType MediaType) bool {
+	if (check.Type == "*" || check.Type == mediaType.Type) &&
+		(check.Subtype == "*" || check.Subtype == mediaType.Subtype) {
+
+		for checkKey, checkValue := range check.Parameters {
+			if value, found := mediaType.Parameters[checkKey]; !found || value != checkValue {
 				return false
 			}
 		}
+
+		return true
 	}
 
-	return true
+	return false
+}
+
+func getPrecedence(check, mediaType MediaType) bool {
+	if mediaType.Type == "" || mediaType.Subtype == "" { // not set
+		return true
+	}
+
+	if (mediaType.Type == "*" && check.Type != "*") ||
+		(mediaType.Subtype == "*" && check.Subtype != "*") {
+		return true
+	}
+
+	return false
 }
 
 func NewMediaType(s string) MediaType {
@@ -293,10 +334,12 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 
 	s := acceptHeaders[0]
 
-	resultMediaType := MediaType{}
-	resultExtensionParameters := make(Parameters)
-	resultWeight := ""
-	acceptableTypeFound := false
+	weights := make([]struct {
+		mediaType           MediaType
+		extensionParameters Parameters
+		weight              int
+		order               int
+	}, len(availableMediaTypes))
 
 	for mediaTypeCount := 0; len(s) > 0; mediaTypeCount++ {
 		if mediaTypeCount > 0 {
@@ -307,15 +350,15 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 			s = s[1:] // skip the comma
 		}
 
-		mediaType := MediaType{}
+		acceptableMediaType := MediaType{}
 		var consumed bool
-		mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s)
+		acceptableMediaType.Type, acceptableMediaType.Subtype, s, consumed = consumeType(s)
 		if !consumed {
 			return MediaType{}, Parameters{}, InvalidMediaTypeError
 		}
 
-		parameters := make(Parameters)
-		weight := "1"
+		acceptableMediaType.Parameters = make(Parameters)
+		weight := 1000 // 1.000
 
 		// media type parameters
 		for len(s) > 0 && s[0] == ';' {
@@ -328,16 +371,15 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 				return MediaType{}, Parameters{}, InvalidParameterError
 			}
 
-			parameters[key] = value
-
 			if key == "q" {
-				if !checkWeight(value) {
+				weight, consumed = getWeight(value)
+				if !consumed {
 					return MediaType{}, Parameters{}, InvalidWeightError
 				}
-
-				weight = value
 				break // "q" parameter separates media type parameters from Accept extension parameters
 			}
+
+			acceptableMediaType.Parameters[key] = value
 		}
 
 		extensionParameters := make(Parameters)
@@ -355,18 +397,13 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 			extensionParameters[key] = value
 		}
 
-		for _, availableMediaType := range availableMediaTypes {
-			if weight > "0" && // 0 means "not acceptable"
-				(mediaType.Type == "*" || mediaType.Type == availableMediaType.Type) &&
-				(mediaType.Subtype == "*" || mediaType.Subtype == availableMediaType.Subtype) {
-
-				if !acceptableTypeFound || weight > resultWeight {
-					resultMediaType = availableMediaType
-					resultMediaType.Parameters = parameters
-					resultExtensionParameters = extensionParameters
-					resultWeight = weight
-					acceptableTypeFound = true
-				}
+		for i := 0; i < len(availableMediaTypes); i++ {
+			if compareMediaTypes(acceptableMediaType, availableMediaTypes[i]) &&
+				getPrecedence(acceptableMediaType, weights[i].mediaType) {
+				weights[i].mediaType = acceptableMediaType
+				weights[i].extensionParameters = extensionParameters
+				weights[i].weight = weight
+				weights[i].order = mediaTypeCount
 			}
 		}
 
@@ -377,7 +414,22 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 		return MediaType{}, Parameters{}, InvalidMediaRangeError
 	}
 
-	if !acceptableTypeFound {
+	resultMediaType := MediaType{}
+	resultExtensionParameters := make(Parameters)
+	resultWeight := 0
+	resultOrder := -1
+
+	for i := 0; i < len(availableMediaTypes); i++ {
+		if weights[i].weight > resultWeight ||
+			(weights[i].weight == resultWeight && weights[i].order < resultOrder) {
+			resultMediaType = availableMediaTypes[i]
+			resultExtensionParameters = weights[i].extensionParameters
+			resultWeight = weights[i].weight
+			resultOrder = weights[i].order
+		}
+	}
+
+	if resultWeight == 0 {
 		return MediaType{}, Parameters{}, NoAcceptableTypeFoundError
 	}
 
