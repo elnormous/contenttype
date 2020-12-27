@@ -280,6 +280,25 @@ func NewMediaType(s string) MediaType {
 	return mediaType
 }
 
+func (mediaType *MediaType) String() string {
+	var stringBuilder strings.Builder
+
+	if len(mediaType.Type) > 0 || len(mediaType.Subtype) > 0 {
+		stringBuilder.WriteString(mediaType.Type)
+		stringBuilder.WriteByte('/')
+		stringBuilder.WriteString(mediaType.Subtype)
+	}
+
+	for key, value := range mediaType.Parameters {
+		stringBuilder.WriteByte(';')
+		stringBuilder.WriteString(key)
+		stringBuilder.WriteByte('=')
+		stringBuilder.WriteString(value)
+	}
+
+	return stringBuilder.String()
+}
+
 func GetMediaType(request *http.Request) (MediaType, error) {
 	// RFC 7231, 3.1.1.5. Content-Type
 	contentTypeHeaders := request.Header.Values("Content-Type")

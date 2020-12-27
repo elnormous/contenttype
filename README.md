@@ -13,7 +13,7 @@ func handleRequest(responseWriter http.ResponseWriter, request *http.Request) {
     if contentTypeError != nil {
         // handle the error
     }
-    log.Println("Media type:", result.Type, result.Subtype, "parameters:", result.Parameters)
+    log.Println("Media type:", result.String())
 
     availableMediaTypes := []MediaType{
         contenttype.NewMediaType("application/json"),
@@ -24,7 +24,6 @@ func handleRequest(responseWriter http.ResponseWriter, request *http.Request) {
     if acceptError != nil {
         // handle the error
     }
-    log.Println("Accepted media type:", accepted.Type, accepted.Subtype, "parameters:", accepted.Parameters)
-    log.Println("Extension parameters:", extParameters)
+    log.Println("Accepted media type:", accepted.String(), "extension parameters:", extParameters)
 }
 ```
