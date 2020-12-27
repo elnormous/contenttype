@@ -222,11 +222,11 @@ func getWeight(s string) (int, bool) {
 	return result, true
 }
 
-func compareMediaTypes(check, mediaType MediaType) bool {
-	if (check.Type == "*" || check.Type == mediaType.Type) &&
-		(check.Subtype == "*" || check.Subtype == mediaType.Subtype) {
+func compareMediaTypes(checkMediaType, mediaType MediaType) bool {
+	if (checkMediaType.Type == "*" || checkMediaType.Type == mediaType.Type) &&
+		(checkMediaType.Subtype == "*" || checkMediaType.Subtype == mediaType.Subtype) {
 
-		for checkKey, checkValue := range check.Parameters {
+		for checkKey, checkValue := range checkMediaType.Parameters {
 			if value, found := mediaType.Parameters[checkKey]; !found || value != checkValue {
 				return false
 			}
@@ -238,13 +238,14 @@ func compareMediaTypes(check, mediaType MediaType) bool {
 	return false
 }
 
-func getPrecedence(check, mediaType MediaType) bool {
+func getPrecedence(checkMediaType, mediaType MediaType) bool {
 	if mediaType.Type == "" || mediaType.Subtype == "" { // not set
 		return true
 	}
 
-	if (mediaType.Type == "*" && check.Type != "*") ||
-		(mediaType.Subtype == "*" && check.Subtype != "*") {
+	if (mediaType.Type == "*" && checkMediaType.Type != "*") ||
+		(mediaType.Subtype == "*" && checkMediaType.Subtype != "*") ||
+		(len(mediaType.Parameters) < len(checkMediaType.Parameters)) {
 		return true
 	}
 
