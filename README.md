@@ -10,10 +10,10 @@ import (
 
 func handleRequest(responseWriter http.ResponseWriter, request *http.Request) {
     mediaType, mediaTypeError := contenttype.GetMediaType(request)
-    if contentTypeError != nil {
+    if mediaTypeError != nil {
         // handle the error
     }
-    log.Println("Media type:", result.String())
+    log.Println("Media type:", mediaType.String())
 
     availableMediaTypes := []MediaType{
         contenttype.NewMediaType("application/json"),
