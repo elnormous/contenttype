@@ -176,6 +176,10 @@ func TestGetAcceptableMediaType(t *testing.T) {
 			{"a", "a", Parameters{"c": "d"}},
 		}, MediaType{"a", "a", Parameters{"c": "d"}}, Parameters{}},
 		{"a/b;q=1;e=e", []MediaType{{"a", "b", Parameters{}}}, MediaType{"a", "b", Parameters{}}, Parameters{"e": "e"}},
+		{"a/*,a/a;q=0", []MediaType{
+			{"a", "a", Parameters{}},
+			{"a", "b", Parameters{}},
+		}, MediaType{"a", "b", Parameters{}}, Parameters{}},
 	}
 
 	for _, testCase := range testCases {
