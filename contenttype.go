@@ -287,6 +287,7 @@ func NewMediaType(s string) MediaType {
 	return mediaType
 }
 
+// Converts the MediaType to string
 func (mediaType *MediaType) String() string {
 	var stringBuilder strings.Builder
 
@@ -306,6 +307,8 @@ func (mediaType *MediaType) String() string {
 	return stringBuilder.String()
 }
 
+// Gets the content of Content-Type header, parses it, and returns the parsed MediaType
+// If the request does not contain the Content-Type header, an empty MediaType is returned
 func GetMediaType(request *http.Request) (MediaType, error) {
 	// RFC 7231, 3.1.1.5. Content-Type
 	contentTypeHeaders := request.Header.Values("Content-Type")
