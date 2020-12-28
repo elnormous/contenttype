@@ -14,8 +14,10 @@ var ErrNoAcceptableTypeFound = errors.New("No acceptable type found")
 var ErrNoAvailableTypeGiven = errors.New("No available type given")
 var ErrInvalidWeight = errors.New("Invalid wieght")
 
+// A map for media type parameters
 type Parameters = map[string]string
 
+// A struct for media type which holds type, subtype and parameters
 type MediaType struct {
 	Type       string
 	Subtype    string
@@ -258,6 +260,7 @@ func getPrecedence(checkMediaType, mediaType MediaType) bool {
 	return false
 }
 
+// Parses the string and returns an instance of MediaType struct
 func NewMediaType(s string) MediaType {
 	mediaType := MediaType{}
 	var consumed bool
@@ -341,6 +344,8 @@ func GetMediaType(request *http.Request) (MediaType, error) {
 	return mediaType, nil
 }
 
+// Choses a media type from available media types according to the Accept
+// Returns the most suitable media type or an error if no type can be selected
 func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaType) (MediaType, Parameters, error) {
 	// RFC 7231, 5.3.2. Accept
 	if len(availableMediaTypes) == 0 {
