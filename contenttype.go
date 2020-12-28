@@ -193,6 +193,12 @@ func getWeight(s string) (int, bool) {
 	// RFC 7231, 5.3.1. Quality Values
 	result := 0
 	multiplier := 1000
+
+	// the string must not have more than three digits after the decimal point
+	if len(s) > 5 {
+		return 0, false
+	}
+
 	for i := 0; i < len(s); i++ {
 		if i == 0 {
 			// the first character must be 0 or 1
@@ -207,8 +213,6 @@ func getWeight(s string) (int, bool) {
 			if s[i] != '.' {
 				return 0, false
 			}
-		} else if i > 4 { // the string can not be longer than 5 characters
-			return 0, false
 		} else {
 			// the remaining characters must be digits and the value can not be greater than 1.000
 			if (s[0] == '1' && s[i] != '0') ||
