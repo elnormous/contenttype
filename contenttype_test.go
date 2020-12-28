@@ -97,19 +97,19 @@ func TestGetMediaTypeErrors(t *testing.T) {
 		header string
 		err    error
 	}{
-		{"Application", InvalidMediaTypeError},
-		{"/Application", InvalidMediaTypeError},
-		{"Application/", InvalidMediaTypeError},
-		{"a/b\x19", InvalidMediaTypeError},
-		{"Application/JSON/test", InvalidMediaTypeError},
-		{"application/xml;=bar ", InvalidParameterError},
-		{"application/xml; =bar ", InvalidParameterError},
-		{"application/xml;foo= ", InvalidParameterError},
-		{"a/b;c=\x19", InvalidParameterError},
-		{"a/b;c=\"\x19\"", InvalidParameterError},
-		{"a/b;c=\"\\\x19\"", InvalidParameterError},
-		{"a/b;c", InvalidParameterError},
-		{"a/b e", InvalidMediaTypeError},
+		{"Application", ErrInvalidMediaType},
+		{"/Application", ErrInvalidMediaType},
+		{"Application/", ErrInvalidMediaType},
+		{"a/b\x19", ErrInvalidMediaType},
+		{"Application/JSON/test", ErrInvalidMediaType},
+		{"application/xml;=bar ", ErrInvalidParameter},
+		{"application/xml; =bar ", ErrInvalidParameter},
+		{"application/xml;foo= ", ErrInvalidParameter},
+		{"a/b;c=\x19", ErrInvalidParameter},
+		{"a/b;c=\"\x19\"", ErrInvalidParameter},
+		{"a/b;c=\"\\\x19\"", ErrInvalidParameter},
+		{"a/b;c", ErrInvalidParameter},
+		{"a/b e", ErrInvalidMediaType},
 	}
 
 	for _, testCase := range testCases {
@@ -212,22 +212,22 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 		availableMediaTypes []MediaType
 		err                 error
 	}{
-		{"", []MediaType{}, NoAvailableTypeGivenError},
-		{"application/xml", []MediaType{{"application", "json", Parameters{}}}, NoAcceptableTypeFoundError},
-		{"application/xml/", []MediaType{{"application", "json", Parameters{}}}, InvalidMediaRangeError},
-		{"application/xml,", []MediaType{{"application", "json", Parameters{}}}, InvalidMediaTypeError},
-		{"/xml", []MediaType{{"application", "json", Parameters{}}}, InvalidMediaTypeError},
-		{"application/,", []MediaType{{"application", "json", Parameters{}}}, InvalidMediaTypeError},
-		{"a/b c", []MediaType{{"a", "b", Parameters{}}}, InvalidMediaRangeError},
-		{"a/b;c", []MediaType{{"a", "b", Parameters{}}}, InvalidParameterError},
-		{"*/b", []MediaType{{"a", "b", Parameters{}}}, InvalidMediaTypeError},
-		{"a/b;q=a", []MediaType{{"a", "b", Parameters{}}}, InvalidWeightError},
-		{"a/b;q=11", []MediaType{{"a", "b", Parameters{}}}, InvalidWeightError},
-		{"a/b;q=1.0000", []MediaType{{"a", "b", Parameters{}}}, InvalidWeightError},
-		{"a/b;q=1.a", []MediaType{{"a", "b", Parameters{}}}, InvalidWeightError},
-		{"a/b;q=1.100", []MediaType{{"a", "b", Parameters{}}}, InvalidWeightError},
-		{"a/b;q=0", []MediaType{{"a", "b", Parameters{}}}, NoAcceptableTypeFoundError},
-		{"a/a;q=1;ext=", []MediaType{{"a", "a", Parameters{}}}, InvalidParameterError},
+		{"", []MediaType{}, ErrNoAvailableTypeGiven},
+		{"application/xml", []MediaType{{"application", "json", Parameters{}}}, ErrNoAcceptableTypeFound},
+		{"application/xml/", []MediaType{{"application", "json", Parameters{}}}, ErrInvalidMediaRange},
+		{"application/xml,", []MediaType{{"application", "json", Parameters{}}}, ErrInvalidMediaType},
+		{"/xml", []MediaType{{"application", "json", Parameters{}}}, ErrInvalidMediaType},
+		{"application/,", []MediaType{{"application", "json", Parameters{}}}, ErrInvalidMediaType},
+		{"a/b c", []MediaType{{"a", "b", Parameters{}}}, ErrInvalidMediaRange},
+		{"a/b;c", []MediaType{{"a", "b", Parameters{}}}, ErrInvalidParameter},
+		{"*/b", []MediaType{{"a", "b", Parameters{}}}, ErrInvalidMediaType},
+		{"a/b;q=a", []MediaType{{"a", "b", Parameters{}}}, ErrInvalidWeight},
+		{"a/b;q=11", []MediaType{{"a", "b", Parameters{}}}, ErrInvalidWeight},
+		{"a/b;q=1.0000", []MediaType{{"a", "b", Parameters{}}}, ErrInvalidWeight},
+		{"a/b;q=1.a", []MediaType{{"a", "b", Parameters{}}}, ErrInvalidWeight},
+		{"a/b;q=1.100", []MediaType{{"a", "b", Parameters{}}}, ErrInvalidWeight},
+		{"a/b;q=0", []MediaType{{"a", "b", Parameters{}}}, ErrNoAcceptableTypeFound},
+		{"a/a;q=1;ext=", []MediaType{{"a", "a", Parameters{}}}, ErrInvalidParameter},
 	}
 
 	for _, testCase := range testCases {
