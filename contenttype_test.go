@@ -1,6 +1,7 @@
 package contenttype_test
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"reflect"
@@ -138,7 +139,7 @@ func TestGetMediaTypeErrors(t *testing.T) {
 			_, mediaTypeError := contenttype.GetMediaType(request)
 			if mediaTypeError == nil {
 				t.Errorf("Expected an error for %s", testCase.header)
-			} else if testCase.err != mediaTypeError {
+			} else if !errors.Is(mediaTypeError, testCase.err) {
 				t.Errorf("Unexpected error \"%s\", expected \"%s\" for %s", mediaTypeError.Error(), testCase.err.Error(), testCase.header)
 			}
 		})
@@ -286,7 +287,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 			_, _, mediaTypeError := contenttype.GetAcceptableMediaType(request, testCase.availableMediaTypes)
 			if mediaTypeError == nil {
 				t.Errorf("Expected an error for %s", testCase.header)
-			} else if testCase.err != mediaTypeError {
+			} else if !errors.Is(mediaTypeError, testCase.err) {
 				t.Errorf("Unexpected error \"%s\", expected \"%s\" for %s", mediaTypeError.Error(), testCase.err.Error(), testCase.header)
 			}
 		})
