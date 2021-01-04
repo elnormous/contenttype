@@ -22,6 +22,7 @@ func TestNewMediaType(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		testCase := testCase
 		t.Run(testCase.name, func(t *testing.T) {
 			result := NewMediaType(testCase.value)
 
@@ -46,6 +47,7 @@ func TestString(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		testCase := testCase
 		t.Run(testCase.name, func(t *testing.T) {
 			result := testCase.value.String()
 
@@ -79,6 +81,7 @@ func TestGetMediaType(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		testCase := testCase
 		t.Run(testCase.name, func(t *testing.T) {
 			request, requestError := http.NewRequest(http.MethodGet, "http://test.test", nil)
 			if requestError != nil {
@@ -123,6 +126,7 @@ func TestGetMediaTypeErrors(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		testCase := testCase
 		t.Run(testCase.name, func(t *testing.T) {
 			request, requestError := http.NewRequest(http.MethodGet, "http://test.test", nil)
 			if requestError != nil {
@@ -200,6 +204,7 @@ func TestGetAcceptableMediaType(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		testCase := testCase
 		t.Run(testCase.name, func(t *testing.T) {
 			request, requestError := http.NewRequest(http.MethodGet, "http://test.test", nil)
 			if requestError != nil {
@@ -251,6 +256,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		testCase := testCase
 		t.Run(testCase.name, func(t *testing.T) {
 			request, requestError := http.NewRequest(http.MethodGet, "http://test.test", nil)
 			if requestError != nil {
