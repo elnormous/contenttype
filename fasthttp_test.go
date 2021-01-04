@@ -1,101 +1,47 @@
 package contenttype_test
 
 import (
-	"errors"
-	"log"
-	"net/http"
+	"bufio"
+	"bytes"
 	"reflect"
 	"testing"
 
 	"github.com/elnormous/contenttype"
+	"github.com/valyala/fasthttp"
 )
 
-func TestNewMediaType(t *testing.T) {
-	testCases := []struct {
-		name   string
-		value  string
-		result contenttype.MediaType
-	}{
-		{"Empty string", "", contenttype.MediaType{}},
-		{"Type and subtype", "application/json", contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
-		{"Type, subtype, parameter", "a/b;c=d", contenttype.MediaType{"a", "b", contenttype.Parameters{"c": "d"}}},
-		{"Subtype only", "/b", contenttype.MediaType{}},
-		{"Type only", "a/", contenttype.MediaType{}},
-		{"Type, subtype, invalid parameter", "a/b;c", contenttype.MediaType{}},
-	}
-
-	for _, testCase := range testCases {
-		testCase := testCase
-		t.Run(testCase.name, func(t *testing.T) {
-			result := contenttype.NewMediaType(testCase.value)
-
-			if result.Type != testCase.result.Type || result.Subtype != testCase.result.Subtype {
-				t.Fatalf("Invalid content type, got %s/%s, exptected %s/%s for %s", result.Type, result.Subtype, testCase.result.Type, testCase.result.Subtype, testCase.value)
-			} else if !reflect.DeepEqual(result.Parameters, testCase.result.Parameters) {
-				t.Fatalf("Wrong parameters, got %v, expected %v for %s", result.Parameters, testCase.result.Parameters, testCase.value)
-			}
-		})
-	}
-}
-
-func TestString(t *testing.T) {
-	testCases := []struct {
-		name   string
-		value  contenttype.MediaType
-		result string
-	}{
-		{"Empty media type", contenttype.MediaType{}, ""},
-		{"Type and subtype", contenttype.MediaType{"application", "json", contenttype.Parameters{}}, "application/json"},
-		{"Type, subtype, parameter", contenttype.MediaType{"a", "b", contenttype.Parameters{"c": "d"}}, "a/b;c=d"},
-	}
-
-	for _, testCase := range testCases {
-		testCase := testCase
-		t.Run(testCase.name, func(t *testing.T) {
-			result := testCase.value.String()
-
-			if result != testCase.result {
-				t.Errorf("Invalid result type, got %s, exptected %s", result, testCase.result)
-			}
-		})
-	}
-}
-
-func TestGetMediaType(t *testing.T) {
+func TestGetMediaTypeFastHttp(t *testing.T) {
 	testCases := []struct {
 		name   string
 		header string
 		result contenttype.MediaType
 	}{
 		{"Empty header", "", contenttype.MediaType{}},
-		{"Type and subtype", "application/json", contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
-		{"Wildcard", "*/*", contenttype.MediaType{"*", "*", contenttype.Parameters{}}},
-		{"Capital subtype", "Application/JSON", contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
-		{"Space in front of type", " application/json ", contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
-		{"Capital and parameter", "Application/XML;charset=utf-8", contenttype.MediaType{"application", "xml", contenttype.Parameters{"charset": "utf-8"}}},
-		{"White space after parameter", "application/xml;foo=bar ", contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "bar"}}},
-		{"White space after subtype and before parameter", "application/xml ; foo=bar ", contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "bar"}}},
-		{"Quoted parameter", "application/xml;foo=\"bar\" ", contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "bar"}}},
-		{"Quoted empty parameter", "application/xml;foo=\"\" ", contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": ""}}},
-		{"Quoted pair", "application/xml;foo=\"\\\"b\" ", contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "\"b"}}},
-		{"Whitespace after quoted parameter", "application/xml;foo=\"\\\"B\" ", contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "\"b"}}},
-		{"Plus in subtype", "a/b+c;a=b;c=d", contenttype.MediaType{"a", "b+c", contenttype.Parameters{"a": "b", "c": "d"}}},
-		{"Capital parameter", "a/b;A=B", contenttype.MediaType{"a", "b", contenttype.Parameters{"a": "b"}}},
+		{"Type and subtype", "application/json", contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}},
+		{"Wildcard", "*/*", contenttype.MediaType{Type: "*", Subtype: "*", Parameters: contenttype.Parameters{}}},
+		{"Capital subtype", "Application/JSON", contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}},
+		{"Space in front of type", " application/json ", contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}},
+		{"Capital and parameter", "Application/XML;charset=utf-8", contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"charset": "utf-8"}}},
+		{"White space after parameter", "application/xml;foo=bar ", contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": "bar"}}},
+		{"White space after subtype and before parameter", "application/xml ; foo=bar ", contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": "bar"}}},
+		{"Quoted parameter", "application/xml;foo=\"bar\" ", contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": "bar"}}},
+		{"Quoted empty parameter", "application/xml;foo=\"\" ", contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": ""}}},
+		{"Quoted pair", "application/xml;foo=\"\\\"b\" ", contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": "\"b"}}},
+		{"Whitespace after quoted parameter", "application/xml;foo=\"\\\"B\" ", contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": "\"b"}}},
+		{"Plus in subtype", "a/b+c;a=b;c=d", contenttype.MediaType{Type: "a", Subtype: "b+c", Parameters: contenttype.Parameters{"a": "b", "c": "d"}}},
+		{"Capital parameter", "a/b;A=B", contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{"a": "b"}}},
 	}
 
 	for _, testCase := range testCases {
 		testCase := testCase
 		t.Run(testCase.name, func(t *testing.T) {
-			request, requestError := http.NewRequest(http.MethodGet, "http://test.test", nil)
-			if requestError != nil {
-				log.Fatal(requestError)
-			}
+			request := getBaseRequest(t)
 
 			if len(testCase.header) > 0 {
 				request.Header.Set("Content-Type", testCase.header)
 			}
 
-			result, mediaTypeError := contenttype.GetMediaType(request)
+			result, mediaTypeError := contenttype.GetMediaTypeFastHTTP(request)
 			if mediaTypeError != nil {
 				t.Errorf("Unexpected error \"%s\" for %s", mediaTypeError.Error(), testCase.header)
 			} else if result.Type != testCase.result.Type || result.Subtype != testCase.result.Subtype {
@@ -107,7 +53,17 @@ func TestGetMediaType(t *testing.T) {
 	}
 }
 
-func TestGetMediaTypeErrors(t *testing.T) {
+func getBaseRequest(t *testing.T) *fasthttp.Request {
+	s := "GET / HTTP/1.0\n\r\n"
+	request := fasthttp.AcquireRequest()
+	br := bufio.NewReader(bytes.NewBufferString(s))
+	if err := request.Read(br); err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	return request
+}
+
+func TestGetMediaTypeFastHttpErrors(t *testing.T) {
 	testCases := []struct {
 		name   string
 		header string
@@ -131,26 +87,23 @@ func TestGetMediaTypeErrors(t *testing.T) {
 	for _, testCase := range testCases {
 		testCase := testCase
 		t.Run(testCase.name, func(t *testing.T) {
-			request, requestError := http.NewRequest(http.MethodGet, "http://test.test", nil)
-			if requestError != nil {
-				log.Fatal(requestError)
-			}
+			request := getBaseRequest(t)
 
 			if len(testCase.header) > 0 {
 				request.Header.Set("Content-Type", testCase.header)
 			}
 
-			_, mediaTypeError := contenttype.GetMediaType(request)
+			_, mediaTypeError := contenttype.GetMediaTypeFastHTTP(request)
 			if mediaTypeError == nil {
 				t.Errorf("Expected an error for %s", testCase.header)
-			} else if !errors.Is(mediaTypeError, testCase.err) {
+			} else if testCase.err != mediaTypeError {
 				t.Errorf("Unexpected error \"%s\", expected \"%s\" for %s", mediaTypeError.Error(), testCase.err.Error(), testCase.header)
 			}
 		})
 	}
 }
 
-func TestGetAcceptableMediaType(t *testing.T) {
+func TestGetAcceptableMediaTypeFastHttp(t *testing.T) {
 	testCases := []struct {
 		name                string
 		header              string
@@ -158,87 +111,63 @@ func TestGetAcceptableMediaType(t *testing.T) {
 		result              contenttype.MediaType
 		extensionParameters contenttype.Parameters
 	}{
-		{"Empty header", "", []contenttype.MediaType{
-			{"application", "json", contenttype.Parameters{}},
-		}, contenttype.MediaType{"application", "json", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Type and subtype", "application/json", []contenttype.MediaType{
-			{"application", "json", contenttype.Parameters{}},
-		}, contenttype.MediaType{"application", "json", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Capitalized type and subtype", "Application/Json", []contenttype.MediaType{
-			{"application", "json", contenttype.Parameters{}},
-		}, contenttype.MediaType{"application", "json", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Multiple accept types", "text/plain,application/xml", []contenttype.MediaType{
-			{"text", "plain", contenttype.Parameters{}},
-		}, contenttype.MediaType{"text", "plain", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Multiple accept types, second available", "text/plain,application/xml", []contenttype.MediaType{
-			{"application", "xml", contenttype.Parameters{}},
-		}, contenttype.MediaType{"application", "xml", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Accept weight", "text/plain;q=1.0", []contenttype.MediaType{
-			{"text", "plain", contenttype.Parameters{}},
-		}, contenttype.MediaType{"text", "plain", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Wildcard", "*/*", []contenttype.MediaType{
-			{"application", "json", contenttype.Parameters{}},
-		}, contenttype.MediaType{"application", "json", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Wildcard subtype", "application/*", []contenttype.MediaType{
-			{"application", "json", contenttype.Parameters{}},
-		}, contenttype.MediaType{"application", "json", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Weight with dot", "a/b;q=1.", []contenttype.MediaType{
-			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{}},
+		{"Empty header", "", []contenttype.MediaType{{"application", "json", contenttype.Parameters{}}}, contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
+		{"Type and subtype", "application/json", []contenttype.MediaType{{"application", "json", contenttype.Parameters{}}}, contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
+		{"Capitalized type and subtype", "Application/Json", []contenttype.MediaType{{"application", "json", contenttype.Parameters{}}}, contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
+		{"Multiple accept types", "text/plain,application/xml", []contenttype.MediaType{{"text", "plain", contenttype.Parameters{}}}, contenttype.MediaType{Type: "text", Subtype: "plain", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
+		{"Multiple accept types, second available", "text/plain,application/xml", []contenttype.MediaType{{"application", "xml", contenttype.Parameters{}}}, contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
+		{"Accept weight", "text/plain;q=1.0", []contenttype.MediaType{{"text", "plain", contenttype.Parameters{}}}, contenttype.MediaType{Type: "text", Subtype: "plain", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
+		{"Wildcard", "*/*", []contenttype.MediaType{{"application", "json", contenttype.Parameters{}}}, contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
+		{"Wildcard subtype", "application/*", []contenttype.MediaType{{"application", "json", contenttype.Parameters{}}}, contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
+		{"Weight with dot", "a/b;q=1.", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
 		{"Multiple weights", "a/b;q=0.1,c/d;q=0.2", []contenttype.MediaType{
 			{"a", "b", contenttype.Parameters{}},
 			{"c", "d", contenttype.Parameters{}},
-		}, contenttype.MediaType{"c", "d", contenttype.Parameters{}}, contenttype.Parameters{}},
+		}, contenttype.MediaType{Type: "c", Subtype: "d", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
 		{"Multiple weights and default weight", "a/b;q=0.2,c/d;q=0.2", []contenttype.MediaType{
 			{"a", "b", contenttype.Parameters{}},
 			{"c", "d", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{}},
+		}, contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
 		{"Wildcard subtype and weight", "a/*;q=0.2,a/c", []contenttype.MediaType{
 			{"a", "b", contenttype.Parameters{}},
 			{"a", "c", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "c", contenttype.Parameters{}}, contenttype.Parameters{}},
+		}, contenttype.MediaType{Type: "a", Subtype: "c", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
 		{"Different accept order", "a/b,a/a", []contenttype.MediaType{
 			{"a", "a", contenttype.Parameters{}},
 			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{}},
+		}, contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
 		{"Wildcard subtype with multiple available types", "a/*", []contenttype.MediaType{
 			{"a", "a", contenttype.Parameters{}},
 			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "a", contenttype.Parameters{}}, contenttype.Parameters{}},
+		}, contenttype.MediaType{Type: "a", Subtype: "a", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
 		{"Wildcard subtype against weighted type", "a/a;q=0.2,a/*", []contenttype.MediaType{
 			{"a", "a", contenttype.Parameters{}},
 			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{}},
+		}, contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
 		{"Media type parameter", "a/a;q=0.2,a/a;c=d", []contenttype.MediaType{
 			{"a", "a", contenttype.Parameters{}},
 			{"a", "a", contenttype.Parameters{"c": "d"}},
-		}, contenttype.MediaType{"a", "a", contenttype.Parameters{"c": "d"}}, contenttype.Parameters{}},
-		{"Weight and media type parameter", "a/b;q=1;e=e", []contenttype.MediaType{
-			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{"e": "e"}},
+		}, contenttype.MediaType{Type: "a", Subtype: "a", Parameters: contenttype.Parameters{"c": "d"}}, contenttype.Parameters{}},
+		{"Weight and media type parameter", "a/b;q=1;e=e", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, contenttype.Parameters{"e": "e"}},
 		{"", "a/*,a/a;q=0", []contenttype.MediaType{
 			{"a", "a", contenttype.Parameters{}},
 			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{}},
+		}, contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
 		{"Maximum length weight", "a/a;q=0.001,a/b;q=0.002", []contenttype.MediaType{
 			{"a", "a", contenttype.Parameters{}},
 			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{}},
+		}, contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, contenttype.Parameters{}},
 	}
 
 	for _, testCase := range testCases {
 		testCase := testCase
 		t.Run(testCase.name, func(t *testing.T) {
-			request, requestError := http.NewRequest(http.MethodGet, "http://test.test", nil)
-			if requestError != nil {
-				log.Fatal(requestError)
-			}
-
+			request := getBaseRequest(t)
 			if len(testCase.header) > 0 {
 				request.Header.Set("Accept", testCase.header)
 			}
 
-			result, extensionParameters, mediaTypeError := contenttype.GetAcceptableMediaType(request, testCase.availableMediaTypes)
+			result, extensionParameters, mediaTypeError := contenttype.GetAcceptableMediaTypeFastHTTP(request, testCase.availableMediaTypes)
 
 			if mediaTypeError != nil {
 				t.Errorf("Unexpected error \"%s\" for %s", mediaTypeError.Error(), testCase.header)
@@ -253,7 +182,7 @@ func TestGetAcceptableMediaType(t *testing.T) {
 	}
 }
 
-func TestGetAcceptableMediaTypeErrors(t *testing.T) {
+func TestGetAcceptableMediaTypeFastHttpErrors(t *testing.T) {
 	testCases := []struct {
 		name                string
 		header              string
@@ -281,19 +210,16 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 	for _, testCase := range testCases {
 		testCase := testCase
 		t.Run(testCase.name, func(t *testing.T) {
-			request, requestError := http.NewRequest(http.MethodGet, "http://test.test", nil)
-			if requestError != nil {
-				log.Fatal(requestError)
-			}
+			request := getBaseRequest(t)
 
 			if len(testCase.header) > 0 {
 				request.Header.Set("Accept", testCase.header)
 			}
 
-			_, _, mediaTypeError := contenttype.GetAcceptableMediaType(request, testCase.availableMediaTypes)
+			_, _, mediaTypeError := contenttype.GetAcceptableMediaTypeFastHTTP(request, testCase.availableMediaTypes)
 			if mediaTypeError == nil {
 				t.Errorf("Expected an error for %s", testCase.header)
-			} else if !errors.Is(mediaTypeError, testCase.err) {
+			} else if testCase.err != mediaTypeError {
 				t.Errorf("Unexpected error \"%s\", expected \"%s\" for %s", mediaTypeError.Error(), testCase.err.Error(), testCase.header)
 			}
 		})
