@@ -6,13 +6,15 @@ import (
 	"strings"
 )
 
-var ErrInvalidMediaType = errors.New("Invalid media type")
-var ErrInvalidMediaRange = errors.New("Invalid media range")
-var ErrInvalidParameter = errors.New("Invalid parameter")
-var ErrInvalidExtensionParameter = errors.New("Invalid extension parameter")
-var ErrNoAcceptableTypeFound = errors.New("No acceptable type found")
-var ErrNoAvailableTypeGiven = errors.New("No available type given")
-var ErrInvalidWeight = errors.New("Invalid wieght")
+var (
+	ErrInvalidMediaType          = errors.New("Invalid media type")
+	ErrInvalidMediaRange         = errors.New("Invalid media range")
+	ErrInvalidParameter          = errors.New("Invalid parameter")
+	ErrInvalidExtensionParameter = errors.New("Invalid extension parameter")
+	ErrNoAcceptableTypeFound     = errors.New("No acceptable type found")
+	ErrNoAvailableTypeGiven      = errors.New("No available type given")
+	ErrInvalidWeight             = errors.New("Invalid wieght")
+)
 
 // A map for media type parameters
 type Parameters = map[string]string
