@@ -1,3 +1,4 @@
+// Package implement HTTP Content-Type and Accept header parsers.
 package contenttype
 
 import (
@@ -16,10 +17,10 @@ var (
 	ErrInvalidWeight             = errors.New("Invalid wieght")
 )
 
-// A map for media type parameters
+// A map for media type parameters.
 type Parameters = map[string]string
 
-// A struct for media type which holds type, subtype and parameters
+// A struct for media type which holds type, subtype and parameters.
 type MediaType struct {
 	Type       string
 	Subtype    string
@@ -262,7 +263,7 @@ func getPrecedence(checkMediaType, mediaType MediaType) bool {
 	return false
 }
 
-// Parses the string and returns an instance of MediaType struct
+// Parses the string and returns an instance of MediaType struct.
 func NewMediaType(s string) MediaType {
 	mediaType := MediaType{}
 	var consumed bool
@@ -289,7 +290,7 @@ func NewMediaType(s string) MediaType {
 	return mediaType
 }
 
-// Converts the MediaType to string
+// Converts the MediaType to string.
 func (mediaType *MediaType) String() string {
 	var stringBuilder strings.Builder
 
@@ -309,8 +310,8 @@ func (mediaType *MediaType) String() string {
 	return stringBuilder.String()
 }
 
-// Gets the content of Content-Type header, parses it, and returns the parsed MediaType
-// If the request does not contain the Content-Type header, an empty MediaType is returned
+// Gets the content of Content-Type header, parses it, and returns the parsed MediaType.
+// If the request does not contain the Content-Type header, an empty MediaType is returned.
 func GetMediaType(request *http.Request) (MediaType, error) {
 	// RFC 7231, 3.1.1.5. Content-Type
 	contentTypeHeaders := request.Header.Values("Content-Type")
@@ -349,8 +350,8 @@ func GetMediaType(request *http.Request) (MediaType, error) {
 	return mediaType, nil
 }
 
-// Choses a media type from available media types according to the Accept
-// Returns the most suitable media type or an error if no type can be selected
+// Choses a media type from available media types according to the Accept.
+// Returns the most suitable media type or an error if no type can be selected.
 func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaType) (MediaType, Parameters, error) {
 	// RFC 7231, 5.3.2. Accept
 	if len(availableMediaTypes) == 0 {
