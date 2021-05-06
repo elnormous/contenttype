@@ -83,18 +83,18 @@ func TestGetMediaType(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			request, requestError := http.NewRequest(http.MethodGet, "http://test.test", nil)
-			if requestError != nil {
-				log.Fatal(requestError)
+			request, err := http.NewRequest(http.MethodGet, "http://test.test", nil)
+			if err != nil {
+				log.Fatal(err)
 			}
 
 			if len(testCase.header) > 0 {
 				request.Header.Set("Content-Type", testCase.header)
 			}
 
-			result, mediaTypeError := contenttype.GetMediaType(request)
-			if mediaTypeError != nil {
-				t.Errorf("Unexpected error \"%s\" for %s", mediaTypeError.Error(), testCase.header)
+			result, err := contenttype.GetMediaType(request)
+			if err != nil {
+				t.Errorf("Unexpected error \"%w\" for %s", err, testCase.header)
 			} else if result.Type != testCase.result.Type || result.Subtype != testCase.result.Subtype {
 				t.Errorf("Invalid content type, got %s/%s, exptected %s/%s for %s", result.Type, result.Subtype, testCase.result.Type, testCase.result.Subtype, testCase.header)
 			} else if !reflect.DeepEqual(result.Parameters, testCase.result.Parameters) {
@@ -127,20 +127,20 @@ func TestGetMediaTypeErrors(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			request, requestError := http.NewRequest(http.MethodGet, "http://test.test", nil)
-			if requestError != nil {
-				log.Fatal(requestError)
+			request, err := http.NewRequest(http.MethodGet, "http://test.test", nil)
+			if err != nil {
+				log.Fatal(err)
 			}
 
 			if len(testCase.header) > 0 {
 				request.Header.Set("Content-Type", testCase.header)
 			}
 
-			_, mediaTypeError := contenttype.GetMediaType(request)
-			if mediaTypeError == nil {
+			_, err = contenttype.GetMediaType(request)
+			if err == nil {
 				t.Errorf("Expected an error for %s", testCase.header)
-			} else if !errors.Is(mediaTypeError, testCase.err) {
-				t.Errorf("Unexpected error \"%s\", expected \"%s\" for %s", mediaTypeError.Error(), testCase.err.Error(), testCase.header)
+			} else if !errors.Is(err, testCase.err) {
+				t.Errorf("Unexpected error \"%w\", expected \"%v\" for %s", err, testCase.err, testCase.header)
 			}
 		})
 	}
@@ -224,19 +224,19 @@ func TestGetAcceptableMediaType(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			request, requestError := http.NewRequest(http.MethodGet, "http://test.test", nil)
-			if requestError != nil {
-				log.Fatal(requestError)
+			request, err := http.NewRequest(http.MethodGet, "http://test.test", nil)
+			if err != nil {
+				log.Fatal(err)
 			}
 
 			if len(testCase.header) > 0 {
 				request.Header.Set("Accept", testCase.header)
 			}
 
-			result, extensionParameters, mediaTypeError := contenttype.GetAcceptableMediaType(request, testCase.availableMediaTypes)
+			result, extensionParameters, err := contenttype.GetAcceptableMediaType(request, testCase.availableMediaTypes)
 
-			if mediaTypeError != nil {
-				t.Errorf("Unexpected error \"%s\" for %s", mediaTypeError.Error(), testCase.header)
+			if err != nil {
+				t.Errorf("Unexpected error \"%w\" for %s", err, testCase.header)
 			} else if result.Type != testCase.result.Type || result.Subtype != testCase.result.Subtype {
 				t.Errorf("Invalid content type, got %s/%s, exptected %s/%s for %s", result.Type, result.Subtype, testCase.result.Type, testCase.result.Subtype, testCase.header)
 			} else if !reflect.DeepEqual(result.Parameters, testCase.result.Parameters) {
@@ -275,20 +275,20 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			request, requestError := http.NewRequest(http.MethodGet, "http://test.test", nil)
-			if requestError != nil {
-				log.Fatal(requestError)
+			request, err := http.NewRequest(http.MethodGet, "http://test.test", nil)
+			if err != nil {
+				log.Fatal(err)
 			}
 
 			if len(testCase.header) > 0 {
 				request.Header.Set("Accept", testCase.header)
 			}
 
-			_, _, mediaTypeError := contenttype.GetAcceptableMediaType(request, testCase.availableMediaTypes)
-			if mediaTypeError == nil {
+			_, _, err = contenttype.GetAcceptableMediaType(request, testCase.availableMediaTypes)
+			if err == nil {
 				t.Errorf("Expected an error for %s", testCase.header)
-			} else if !errors.Is(mediaTypeError, testCase.err) {
-				t.Errorf("Unexpected error \"%s\", expected \"%s\" for %s", mediaTypeError.Error(), testCase.err.Error(), testCase.header)
+			} else if !errors.Is(err, testCase.err) {
+				t.Errorf("Unexpected error \"%w\", expected \"%v\" for %s", err, testCase.err, testCase.header)
 			}
 		})
 	}
