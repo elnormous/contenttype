@@ -9,19 +9,19 @@ import (
 
 var (
 	// Media type in the Content-Type or Accept header is syntactically invalid.
-	ErrInvalidMediaType = errors.New("Invalid media type")
+	ErrInvalidMediaType = errors.New("invalid media type")
 	// Range of media types in the Content-Type or Accept header is syntactically invalid.
-	ErrInvalidMediaRange = errors.New("Invalid media range")
+	ErrInvalidMediaRange = errors.New("invalid media range")
 	// Media type parameter in the Content-Type or Accept header is syntactically invalid.
-	ErrInvalidParameter = errors.New("Invalid parameter")
+	ErrInvalidParameter = errors.New("invalid parameter")
 	// Media type extension parameter in the Content-Type or Accept header is syntactically invalid.
-	ErrInvalidExtensionParameter = errors.New("Invalid extension parameter")
+	ErrInvalidExtensionParameter = errors.New("invalid extension parameter")
 	// Accept header contains only media types that are not in the acceptable media type list.
-	ErrNoAcceptableTypeFound = errors.New("No acceptable type found")
+	ErrNoAcceptableTypeFound = errors.New("no acceptable type found")
 	// Acceptbale media type list is empty.
-	ErrNoAvailableTypeGiven = errors.New("No available type given")
+	ErrNoAvailableTypeGiven = errors.New("no available type given")
 	// Media type weight in the Accept header is syntactically invalid.
-	ErrInvalidWeight = errors.New("Invalid wieght")
+	ErrInvalidWeight = errors.New("invalid wieght")
 )
 
 // A map for media type parameters.
