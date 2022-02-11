@@ -326,7 +326,12 @@ func GetMediaType(request *http.Request) (MediaType, error) {
 		return MediaType{}, nil
 	}
 
-	s := contentTypeHeaders[0]
+	return ParseMediaType(contentTypeHeaders[0])
+}
+
+// Parses the given string as a MIME media type (with optional parameters) and returns it as a MediaType.
+// If the string cannot be parsed an appropriate error is returned.
+func ParseMediaType(s string) (MediaType, error) {
 	mediaType := MediaType{}
 	var consumed bool
 	mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s)
@@ -370,7 +375,13 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 		return availableMediaTypes[0], Parameters{}, nil
 	}
 
-	s := acceptHeaders[0]
+	return GetAcceptableMediaTypeFromHeader(acceptHeaders[0], availableMediaTypes)
+}
+
+// Choses a media type from available media types according to the specified Accept header value.
+// Returns the most suitable media type or an error if no type can be selected.
+func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []MediaType) (MediaType, Parameters, error) {
+	s := headerValue
 
 	weights := make([]struct {
 		mediaType           MediaType
