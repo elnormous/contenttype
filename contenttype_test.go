@@ -122,7 +122,7 @@ func TestGetMediaTypeErrors(t *testing.T) {
 		{"Invalid character in quoted string", "a/b;c=\"\x19\"", contenttype.ErrInvalidParameter},
 		{"Invalid character in quoted pair", "a/b;c=\"\\\x19\"", contenttype.ErrInvalidParameter},
 		{"No assignment after parameter", "a/b;c", contenttype.ErrInvalidParameter},
-		{"No semicolon before paremeter", "a/b e", contenttype.ErrInvalidMediaType},
+		{"No semicolon before parameter", "a/b e", contenttype.ErrInvalidMediaType},
 	}
 
 	for _, testCase := range testCases {
