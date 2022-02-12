@@ -106,6 +106,7 @@ func consumeToken(s string) (token, remaining string, consumed bool) {
 }
 
 func consumeQuotedString(s string) (token, remaining string, consumed bool) {
+	// RFC 7230, 3.2.6. Field Value Components
 	var stringBuilder strings.Builder
 
 	index := 0
