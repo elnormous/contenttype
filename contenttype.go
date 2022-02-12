@@ -34,7 +34,7 @@ type MediaType struct {
 	Parameters Parameters
 }
 
-func isWhiteSpaceChar(c byte) bool {
+func isWhitespaceChar(c byte) bool {
 	// RFC 7230, 3.2.3. Whitespace
 	return c == 0x09 || c == 0x20 // HTAB or SP
 }
@@ -69,7 +69,7 @@ func isObsoleteTextChar(c byte) bool {
 
 func isQuotedTextChar(c byte) bool {
 	// RFC 7230, 3.2.6. Field Value Components
-	return isWhiteSpaceChar(c) ||
+	return isWhitespaceChar(c) ||
 		c == 0x21 ||
 		(c >= 0x23 && c <= 0x5B) ||
 		(c >= 0x5D && c <= 0x7E) ||
@@ -78,15 +78,15 @@ func isQuotedTextChar(c byte) bool {
 
 func isQuotedPairChar(c byte) bool {
 	// RFC 7230, 3.2.6. Field Value Components
-	return isWhiteSpaceChar(c) ||
+	return isWhitespaceChar(c) ||
 		isVisibleChar(c) ||
 		isObsoleteTextChar(c)
 }
 
-func skipWhiteSpaces(s string) string {
+func skipWhitespaces(s string) string {
 	// RFC 7230, 3.2.3. Whitespace
 	for i := 0; i < len(s); i++ {
-		if !isWhiteSpaceChar(s[i]) {
+		if !isWhitespaceChar(s[i]) {
 			return s[i:]
 		}
 	}
@@ -128,7 +128,7 @@ func consumeQuotedString(s string) (token, remaining string, consumed bool) {
 
 func consumeType(s string) (string, string, string, bool) {
 	// RFC 7231, 3.1.1.1. Media Type
-	s = skipWhiteSpaces(s)
+	s = skipWhitespaces(s)
 
 	var t, subt string
 	var consumed bool
@@ -152,14 +152,14 @@ func consumeType(s string) (string, string, string, bool) {
 		return "", "", s, false
 	}
 
-	s = skipWhiteSpaces(s)
+	s = skipWhitespaces(s)
 
 	return t, subt, s, true
 }
 
 func consumeParameter(s string) (string, string, string, bool) {
 	// RFC 7231, 3.1.1.1. Media Type
-	s = skipWhiteSpaces(s)
+	s = skipWhitespaces(s)
 
 	var consumed bool
 	var key string
@@ -196,7 +196,7 @@ func consumeParameter(s string) (string, string, string, bool) {
 		}
 	}
 
-	s = skipWhiteSpaces(s)
+	s = skipWhitespaces(s)
 
 	return key, value, s, true
 }
@@ -454,7 +454,7 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 			}
 		}
 
-		s = skipWhiteSpaces(s)
+		s = skipWhitespaces(s)
 	}
 
 	// there must not be anything left after parsing the header
