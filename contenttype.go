@@ -78,7 +78,7 @@ func isQuotedTextChar(c byte) bool {
 
 func isQuotedPairChar(c byte) bool {
 	// RFC 7230, 3.2.6. Field Value Components
-	return c == 0x09 || c == 0x20 || // HTAB or SP
+	return isWhiteSpaceChar(c) ||
 		isVisibleChar(c) ||
 		isObsoleteTextChar(c)
 }
