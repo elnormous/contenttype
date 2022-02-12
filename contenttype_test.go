@@ -94,7 +94,7 @@ func TestGetMediaType(t *testing.T) {
 
 			result, err := contenttype.GetMediaType(request)
 			if err != nil {
-				t.Errorf("Unexpected error \"%w\" for %s", err, testCase.header)
+				t.Errorf("Unexpected error \"%v\" for %s", err, testCase.header)
 			} else if result.Type != testCase.result.Type || result.Subtype != testCase.result.Subtype {
 				t.Errorf("Invalid content type, got %s/%s, exptected %s/%s for %s", result.Type, result.Subtype, testCase.result.Type, testCase.result.Subtype, testCase.header)
 			} else if !reflect.DeepEqual(result.Parameters, testCase.result.Parameters) {
@@ -140,7 +140,7 @@ func TestGetMediaTypeErrors(t *testing.T) {
 			if err == nil {
 				t.Errorf("Expected an error for %s", testCase.header)
 			} else if !errors.Is(err, testCase.err) {
-				t.Errorf("Unexpected error \"%w\", expected \"%v\" for %s", err, testCase.err, testCase.header)
+				t.Errorf("Unexpected error \"%v\", expected \"%v\" for %s", err, testCase.err, testCase.header)
 			}
 		})
 	}
@@ -236,7 +236,7 @@ func TestGetAcceptableMediaType(t *testing.T) {
 			result, extensionParameters, err := contenttype.GetAcceptableMediaType(request, testCase.availableMediaTypes)
 
 			if err != nil {
-				t.Errorf("Unexpected error \"%w\" for %s", err, testCase.header)
+				t.Errorf("Unexpected error \"%v\" for %s", err, testCase.header)
 			} else if result.Type != testCase.result.Type || result.Subtype != testCase.result.Subtype {
 				t.Errorf("Invalid content type, got %s/%s, exptected %s/%s for %s", result.Type, result.Subtype, testCase.result.Type, testCase.result.Subtype, testCase.header)
 			} else if !reflect.DeepEqual(result.Parameters, testCase.result.Parameters) {
@@ -288,7 +288,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 			if err == nil {
 				t.Errorf("Expected an error for %s", testCase.header)
 			} else if !errors.Is(err, testCase.err) {
-				t.Errorf("Unexpected error \"%w\", expected \"%v\" for %s", err, testCase.err, testCase.header)
+				t.Errorf("Unexpected error \"%v\", expected \"%v\" for %s", err, testCase.err, testCase.header)
 			}
 		})
 	}
