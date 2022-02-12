@@ -16,12 +16,12 @@ func TestNewMediaType(t *testing.T) {
 		value  string
 		result contenttype.MediaType
 	}{
-		{"Empty string", "", contenttype.MediaType{}},
-		{"Type and subtype", "application/json", contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
-		{"Type, subtype, parameter", "a/b;c=d", contenttype.MediaType{"a", "b", contenttype.Parameters{"c": "d"}}},
-		{"Subtype only", "/b", contenttype.MediaType{}},
-		{"Type only", "a/", contenttype.MediaType{}},
-		{"Type, subtype, invalid parameter", "a/b;c", contenttype.MediaType{}},
+		{name: "Empty string", value: "", result: contenttype.MediaType{}},
+		{name: "Type and subtype", value: "application/json", result: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}},
+		{name: "Type, subtype, parameter", value: "a/b;c=d", result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{"c": "d"}}},
+		{name: "Subtype only", value: "/b", result: contenttype.MediaType{}},
+		{name: "Type only", value: "a/", result: contenttype.MediaType{}},
+		{name: "Type, subtype, invalid parameter", value: "a/b;c", result: contenttype.MediaType{}},
 	}
 
 	for _, testCase := range testCases {
@@ -43,9 +43,9 @@ func TestString(t *testing.T) {
 		value  contenttype.MediaType
 		result string
 	}{
-		{"Empty media type", contenttype.MediaType{}, ""},
-		{"Type and subtype", contenttype.MediaType{"application", "json", contenttype.Parameters{}}, "application/json"},
-		{"Type, subtype, parameter", contenttype.MediaType{"a", "b", contenttype.Parameters{"c": "d"}}, "a/b;c=d"},
+		{name: "Empty media type", value: contenttype.MediaType{}, result: ""},
+		{name: "Type and subtype", value: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}, result: "application/json"},
+		{name: "Type, subtype, parameter", value: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{"c": "d"}}, result: "a/b;c=d"},
 	}
 
 	for _, testCase := range testCases {
@@ -65,20 +65,20 @@ func TestGetMediaType(t *testing.T) {
 		header string
 		result contenttype.MediaType
 	}{
-		{"Empty header", "", contenttype.MediaType{}},
-		{"Type and subtype", "application/json", contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
-		{"Wildcard", "*/*", contenttype.MediaType{"*", "*", contenttype.Parameters{}}},
-		{"Capital subtype", "Application/JSON", contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
-		{"Space in front of type", " application/json ", contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
-		{"Capital and parameter", "Application/XML;charset=utf-8", contenttype.MediaType{"application", "xml", contenttype.Parameters{"charset": "utf-8"}}},
-		{"White space after parameter", "application/xml;foo=bar ", contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "bar"}}},
-		{"White space after subtype and before parameter", "application/xml ; foo=bar ", contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "bar"}}},
-		{"Quoted parameter", "application/xml;foo=\"bar\" ", contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "bar"}}},
-		{"Quoted empty parameter", "application/xml;foo=\"\" ", contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": ""}}},
-		{"Quoted pair", "application/xml;foo=\"\\\"b\" ", contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "\"b"}}},
-		{"Whitespace after quoted parameter", "application/xml;foo=\"\\\"B\" ", contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "\"b"}}},
-		{"Plus in subtype", "a/b+c;a=b;c=d", contenttype.MediaType{"a", "b+c", contenttype.Parameters{"a": "b", "c": "d"}}},
-		{"Capital parameter", "a/b;A=B", contenttype.MediaType{"a", "b", contenttype.Parameters{"a": "b"}}},
+		{name: "Empty header", header: "", result: contenttype.MediaType{}},
+		{name: "Type and subtype", header: "application/json", result: contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
+		{name: "Wildcard", header: "*/*", result: contenttype.MediaType{Type: "*", Subtype: "*", Parameters: contenttype.Parameters{}}},
+		{name: "Capital subtype", header: "Application/JSON", result: contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
+		{name: "Space in front of type", header: " application/json ", result: contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
+		{name: "Capital and parameter", header: "Application/XML;charset=utf-8", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"charset": "utf-8"}}},
+		{name: "White space after parameter", header: "application/xml;foo=bar ", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "bar"}}},
+		{name: "White space after subtype and before parameter", header: "application/xml ; foo=bar ", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "bar"}}},
+		{name: "Quoted parameter", header: "application/xml;foo=\"bar\" ", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "bar"}}},
+		{name: "Quoted empty parameter", header: "application/xml;foo=\"\" ", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": ""}}},
+		{name: "Quoted pair", header: "application/xml;foo=\"\\\"b\" ", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "\"b"}}},
+		{name: "Whitespace after quoted parameter", header: "application/xml;foo=\"\\\"B\" ", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "\"b"}}},
+		{name: "Plus in subtype", header: "a/b+c;a=b;c=d", result: contenttype.MediaType{"a", "b+c", contenttype.Parameters{"a": "b", "c": "d"}}},
+		{name: "Capital parameter", header: "a/b;A=B", result: contenttype.MediaType{"a", "b", contenttype.Parameters{"a": "b"}}},
 	}
 
 	for _, testCase := range testCases {
@@ -154,72 +154,72 @@ func TestGetAcceptableMediaType(t *testing.T) {
 		result              contenttype.MediaType
 		extensionParameters contenttype.Parameters
 	}{
-		{"Empty header", "", []contenttype.MediaType{
+		{name: "Empty header", availableMediaTypes: []contenttype.MediaType{
 			{"application", "json", contenttype.Parameters{}},
-		}, contenttype.MediaType{"application", "json", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Type and subtype", "application/json", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Type and subtype", header: "application/json", availableMediaTypes: []contenttype.MediaType{
 			{"application", "json", contenttype.Parameters{}},
-		}, contenttype.MediaType{"application", "json", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Capitalized type and subtype", "Application/Json", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Capitalized type and subtype", header: "Application/Json", availableMediaTypes: []contenttype.MediaType{
 			{"application", "json", contenttype.Parameters{}},
-		}, contenttype.MediaType{"application", "json", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Multiple accept types", "text/plain,application/xml", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Multiple accept types", header: "text/plain,application/xml", availableMediaTypes: []contenttype.MediaType{
 			{"text", "plain", contenttype.Parameters{}},
-		}, contenttype.MediaType{"text", "plain", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Multiple accept types, second available", "text/plain,application/xml", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "text", Subtype: "plain", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Multiple accept types, second available", header: "text/plain,application/xml", availableMediaTypes: []contenttype.MediaType{
 			{"application", "xml", contenttype.Parameters{}},
-		}, contenttype.MediaType{"application", "xml", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Accept weight", "text/plain;q=1.0", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Accept weight", header: "text/plain;q=1.0", availableMediaTypes: []contenttype.MediaType{
 			{"text", "plain", contenttype.Parameters{}},
-		}, contenttype.MediaType{"text", "plain", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Wildcard", "*/*", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "text", Subtype: "plain", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Wildcard", header: "*/*", availableMediaTypes: []contenttype.MediaType{
 			{"application", "json", contenttype.Parameters{}},
-		}, contenttype.MediaType{"application", "json", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Wildcard subtype", "application/*", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Wildcard subtype", header: "application/*", availableMediaTypes: []contenttype.MediaType{
 			{"application", "json", contenttype.Parameters{}},
-		}, contenttype.MediaType{"application", "json", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Weight with dot", "a/b;q=1.", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Weight with dot", header: "a/b;q=1.", availableMediaTypes: []contenttype.MediaType{
 			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Multiple weights", "a/b;q=0.1,c/d;q=0.2", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Multiple weights", header: "a/b;q=0.1,c/d;q=0.2", availableMediaTypes: []contenttype.MediaType{
 			{"a", "b", contenttype.Parameters{}},
 			{"c", "d", contenttype.Parameters{}},
-		}, contenttype.MediaType{"c", "d", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Multiple weights and default weight", "a/b;q=0.2,c/d;q=0.2", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "c", Subtype: "d", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Multiple weights and default weight", header: "a/b;q=0.2,c/d;q=0.2", availableMediaTypes: []contenttype.MediaType{
 			{"a", "b", contenttype.Parameters{}},
 			{"c", "d", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Wildcard subtype and weight", "a/*;q=0.2,a/c", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Wildcard subtype and weight", header: "a/*;q=0.2,a/c", availableMediaTypes: []contenttype.MediaType{
 			{"a", "b", contenttype.Parameters{}},
 			{"a", "c", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "c", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Different accept order", "a/b,a/a", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "a", Subtype: "c", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Different accept order", header: "a/b,a/a", availableMediaTypes: []contenttype.MediaType{
 			{"a", "a", contenttype.Parameters{}},
 			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Wildcard subtype with multiple available types", "a/*", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Wildcard subtype with multiple available types", header: "a/*", availableMediaTypes: []contenttype.MediaType{
 			{"a", "a", contenttype.Parameters{}},
 			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "a", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Wildcard subtype against weighted type", "a/a;q=0.2,a/*", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "a", Subtype: "a", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Wildcard subtype against weighted type", header: "a/a;q=0.2,a/*", availableMediaTypes: []contenttype.MediaType{
 			{"a", "a", contenttype.Parameters{}},
 			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Media type parameter", "a/a;q=0.2,a/a;c=d", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Media type parameter", header: "a/a;q=0.2,a/a;c=d", availableMediaTypes: []contenttype.MediaType{
 			{"a", "a", contenttype.Parameters{}},
 			{"a", "a", contenttype.Parameters{"c": "d"}},
-		}, contenttype.MediaType{"a", "a", contenttype.Parameters{"c": "d"}}, contenttype.Parameters{}},
-		{"Weight and media type parameter", "a/b;q=1;e=e", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "a", Subtype: "a", Parameters: contenttype.Parameters{"c": "d"}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Weight and media type parameter", header: "a/b;q=1;e=e", availableMediaTypes: []contenttype.MediaType{
 			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{"e": "e"}},
-		{"", "a/*,a/a;q=0", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{"e": "e"}},
+		{header: "a/*,a/a;q=0", availableMediaTypes: []contenttype.MediaType{
 			{"a", "a", contenttype.Parameters{}},
 			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{}},
-		{"Maximum length weight", "a/a;q=0.001,a/b;q=0.002", []contenttype.MediaType{
+		}, result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Maximum length weight", header: "a/a;q=0.001,a/b;q=0.002", availableMediaTypes: []contenttype.MediaType{
 			{"a", "a", contenttype.Parameters{}},
 			{"a", "b", contenttype.Parameters{}},
-		}, contenttype.MediaType{"a", "b", contenttype.Parameters{}}, contenttype.Parameters{}},
+		}, result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
 	}
 
 	for _, testCase := range testCases {
