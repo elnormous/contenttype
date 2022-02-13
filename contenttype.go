@@ -445,8 +445,8 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 			extensionParameters[key] = value
 		}
 
-		for i := 0; i < len(availableMediaTypes); i++ {
-			if compareMediaTypes(acceptableMediaType, availableMediaTypes[i]) &&
+		for i, availableMediaType := range availableMediaTypes {
+			if compareMediaTypes(acceptableMediaType, availableMediaType) &&
 				getPrecedence(acceptableMediaType, weights[i].mediaType) {
 				weights[i].mediaType = acceptableMediaType
 				weights[i].extensionParameters = extensionParameters
@@ -464,13 +464,13 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 	}
 
 	resultIndex := -1
-	for i := 0; i < len(availableMediaTypes); i++ {
+	for i, weight := range weights {
 		if resultIndex != -1 {
-			if weights[i].weight > weights[resultIndex].weight ||
-				(weights[i].weight == weights[resultIndex].weight && weights[i].order < weights[resultIndex].order) {
+			if weight.weight > weights[resultIndex].weight ||
+				(weight.weight == weights[resultIndex].weight && weight.order < weights[resultIndex].order) {
 				resultIndex = i
 			}
-		} else if weights[i].weight > 0 {
+		} else if weight.weight > 0 {
 			resultIndex = i
 		}
 	}
