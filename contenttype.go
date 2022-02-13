@@ -164,8 +164,7 @@ func consumeParameter(s string) (string, string, string, bool) {
 
 	var consumed bool
 	var key string
-	key, s, consumed = consumeToken(s)
-	if !consumed {
+	if key, s, consumed = consumeToken(s); !consumed {
 		return "", "", s, false
 	}
 
@@ -179,8 +178,7 @@ func consumeParameter(s string) (string, string, string, bool) {
 	if len(s) > 0 && s[0] == '"' {
 		s = s[1:] // skip the opening quote
 
-		value, s, consumed = consumeQuotedString(s)
-		if !consumed {
+		if value, s, consumed = consumeQuotedString(s); !consumed {
 			return "", "", s, false
 		}
 
@@ -191,8 +189,7 @@ func consumeParameter(s string) (string, string, string, bool) {
 		s = s[1:] // skip the closing quote
 
 	} else {
-		value, s, consumed = consumeToken(s)
-		if !consumed {
+		if value, s, consumed = consumeToken(s); !consumed {
 			return "", "", s, false
 		}
 	}
@@ -275,8 +272,7 @@ func getPrecedence(checkMediaType, mediaType MediaType) bool {
 func NewMediaType(s string) MediaType {
 	mediaType := MediaType{}
 	var consumed bool
-	mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s)
-	if !consumed {
+	if mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s); !consumed {
 		return MediaType{}
 	}
 
@@ -335,8 +331,7 @@ func GetMediaType(request *http.Request) (MediaType, error) {
 func ParseMediaType(s string) (MediaType, error) {
 	mediaType := MediaType{}
 	var consumed bool
-	mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s)
-	if !consumed {
+	if mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s); !consumed {
 		return MediaType{}, ErrInvalidMediaType
 	}
 
@@ -402,8 +397,7 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 
 		acceptableMediaType := MediaType{}
 		var consumed bool
-		acceptableMediaType.Type, acceptableMediaType.Subtype, s, consumed = consumeType(s)
-		if !consumed {
+		if acceptableMediaType.Type, acceptableMediaType.Subtype, s, consumed = consumeType(s); !consumed {
 			return MediaType{}, Parameters{}, ErrInvalidMediaType
 		}
 
@@ -415,14 +409,12 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 			s = s[1:] // skip the semicolon
 
 			var key, value string
-			key, value, s, consumed = consumeParameter(s)
-			if !consumed {
+			if key, value, s, consumed = consumeParameter(s); !consumed {
 				return MediaType{}, Parameters{}, ErrInvalidParameter
 			}
 
 			if key == "q" {
-				weight, consumed = getWeight(value)
-				if !consumed {
+				if weight, consumed = getWeight(value); !consumed {
 					return MediaType{}, Parameters{}, ErrInvalidWeight
 				}
 				break // "q" parameter separates media type parameters from Accept extension parameters
@@ -435,8 +427,8 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 		for len(s) > 0 && s[0] == ';' {
 			s = s[1:] // skip the semicolon
 
-			key, value, remaining, consumed := consumeParameter(s)
-			if !consumed {
+			var key, value, remaining string
+			if key, value, remaining, consumed = consumeParameter(s); !consumed {
 				return MediaType{}, Parameters{}, ErrInvalidParameter
 			}
 
