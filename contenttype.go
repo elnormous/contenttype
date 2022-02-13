@@ -270,13 +270,13 @@ func getPrecedence(checkMediaType, mediaType MediaType) bool {
 
 // Parses the string and returns an instance of MediaType struct.
 func NewMediaType(s string) MediaType {
-	mediaType := MediaType{}
+	mediaType := MediaType{
+		Parameters: Parameters{},
+	}
 	var consumed bool
 	if mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s); !consumed {
 		return MediaType{}
 	}
-
-	mediaType.Parameters = make(Parameters)
 
 	for len(s) > 0 && s[0] == ';' {
 		s = s[1:] // skip the semicolon
@@ -329,13 +329,14 @@ func GetMediaType(request *http.Request) (MediaType, error) {
 // Parses the given string as a MIME media type (with optional parameters) and returns it as a MediaType.
 // If the string cannot be parsed an appropriate error is returned.
 func ParseMediaType(s string) (MediaType, error) {
-	mediaType := MediaType{}
+	// RFC 7231, 3.1.1.1. Media Type
+	mediaType := MediaType{
+		Parameters: Parameters{},
+	}
 	var consumed bool
 	if mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s); !consumed {
 		return MediaType{}, ErrInvalidMediaType
 	}
-
-	mediaType.Parameters = make(Parameters)
 
 	for len(s) > 0 && s[0] == ';' {
 		s = s[1:] // skip the semicolon

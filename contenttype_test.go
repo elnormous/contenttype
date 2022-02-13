@@ -73,6 +73,7 @@ func TestGetMediaType(t *testing.T) {
 		{name: "Capital and parameter", header: "Application/XML;charset=utf-8", result: contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"charset": "utf-8"}}},
 		{name: "Spaces around semicolon", header: "a/b ; c=d", result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{"c": "d"}}},
 		{name: "Spaces around semicolons", header: "a/b ; c=d ; e=f", result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{"c": "d", "e": "f"}}},
+		{name: "Two spaces around semicolons", header: "a/b  ;  c=d  ;  e=f", result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{"c": "d", "e": "f"}}},
 		{name: "White space after parameter", header: "application/xml;foo=bar ", result: contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": "bar"}}},
 		{name: "White space after subtype and before parameter", header: "application/xml ; foo=bar ", result: contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": "bar"}}},
 		{name: "Quoted parameter", header: "application/xml;foo=\"bar\" ", result: contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": "bar"}}},
