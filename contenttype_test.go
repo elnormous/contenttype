@@ -223,6 +223,9 @@ func TestGetAcceptableMediaType(t *testing.T) {
 			{"a", "a", contenttype.Parameters{}},
 			{"a", "b", contenttype.Parameters{}},
 		}, result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
+		{name: "Spaces around comma", header: "a/a;q=0.1 , a/b , a/c", availableMediaTypes: []contenttype.MediaType{
+			{"a", "a", contenttype.Parameters{}},
+		}, result: contenttype.MediaType{Type: "a", Subtype: "a", Parameters: contenttype.Parameters{}}, extensionParameters: contenttype.Parameters{}},
 	}
 
 	for _, testCase := range testCases {
