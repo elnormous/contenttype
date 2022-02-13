@@ -396,13 +396,14 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 			s = s[1:] // skip the comma
 		}
 
-		acceptableMediaType := MediaType{}
+		acceptableMediaType := MediaType{
+			Parameters: Parameters{},
+		}
 		var consumed bool
 		if acceptableMediaType.Type, acceptableMediaType.Subtype, s, consumed = consumeType(s); !consumed {
 			return MediaType{}, Parameters{}, ErrInvalidMediaType
 		}
 
-		acceptableMediaType.Parameters = make(Parameters)
 		weight := 1000 // 1.000
 
 		// media type parameters
@@ -424,7 +425,7 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 			acceptableMediaType.Parameters[key] = value
 		}
 
-		extensionParameters := make(Parameters)
+		extensionParameters := Parameters{}
 		for len(s) > 0 && s[0] == ';' {
 			s = s[1:] // skip the semicolon
 
