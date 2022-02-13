@@ -66,19 +66,21 @@ func TestGetMediaType(t *testing.T) {
 		result contenttype.MediaType
 	}{
 		{name: "Empty header", header: "", result: contenttype.MediaType{}},
-		{name: "Type and subtype", header: "application/json", result: contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
+		{name: "Type and subtype", header: "application/json", result: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}},
 		{name: "Wildcard", header: "*/*", result: contenttype.MediaType{Type: "*", Subtype: "*", Parameters: contenttype.Parameters{}}},
-		{name: "Capital subtype", header: "Application/JSON", result: contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
-		{name: "Space in front of type", header: " application/json ", result: contenttype.MediaType{"application", "json", contenttype.Parameters{}}},
-		{name: "Capital and parameter", header: "Application/XML;charset=utf-8", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"charset": "utf-8"}}},
-		{name: "White space after parameter", header: "application/xml;foo=bar ", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "bar"}}},
-		{name: "White space after subtype and before parameter", header: "application/xml ; foo=bar ", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "bar"}}},
-		{name: "Quoted parameter", header: "application/xml;foo=\"bar\" ", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "bar"}}},
-		{name: "Quoted empty parameter", header: "application/xml;foo=\"\" ", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": ""}}},
-		{name: "Quoted pair", header: "application/xml;foo=\"\\\"b\" ", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "\"b"}}},
-		{name: "Whitespace after quoted parameter", header: "application/xml;foo=\"\\\"B\" ", result: contenttype.MediaType{"application", "xml", contenttype.Parameters{"foo": "\"b"}}},
-		{name: "Plus in subtype", header: "a/b+c;a=b;c=d", result: contenttype.MediaType{"a", "b+c", contenttype.Parameters{"a": "b", "c": "d"}}},
-		{name: "Capital parameter", header: "a/b;A=B", result: contenttype.MediaType{"a", "b", contenttype.Parameters{"a": "b"}}},
+		{name: "Capital subtype", header: "Application/JSON", result: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}},
+		{name: "Space in front of type", header: " application/json ", result: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}},
+		{name: "Capital and parameter", header: "Application/XML;charset=utf-8", result: contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"charset": "utf-8"}}},
+		{name: "Spaces around semicolon", header: "a/b ; c=d", result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{"c": "d"}}},
+		{name: "Spaces around semicolons", header: "a/b ; c=d ; e=f", result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{"c": "d", "e": "f"}}},
+		{name: "White space after parameter", header: "application/xml;foo=bar ", result: contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": "bar"}}},
+		{name: "White space after subtype and before parameter", header: "application/xml ; foo=bar ", result: contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": "bar"}}},
+		{name: "Quoted parameter", header: "application/xml;foo=\"bar\" ", result: contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": "bar"}}},
+		{name: "Quoted empty parameter", header: "application/xml;foo=\"\" ", result: contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": ""}}},
+		{name: "Quoted pair", header: "application/xml;foo=\"\\\"b\" ", result: contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": "\"b"}}},
+		{name: "Whitespace after quoted parameter", header: "application/xml;foo=\"\\\"B\" ", result: contenttype.MediaType{Type: "application", Subtype: "xml", Parameters: contenttype.Parameters{"foo": "\"b"}}},
+		{name: "Plus in subtype", header: "a/b+c;a=b;c=d", result: contenttype.MediaType{Type: "a", Subtype: "b+c", Parameters: contenttype.Parameters{"a": "b", "c": "d"}}},
+		{name: "Capital parameter", header: "a/b;A=B", result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{"a": "b"}}},
 	}
 
 	for _, testCase := range testCases {
