@@ -37,6 +37,57 @@ func TestNewMediaType(t *testing.T) {
 	}
 }
 
+func TestParseMediaType(t *testing.T) {
+	testCases := []struct {
+		name   string
+		value  string
+		result contenttype.MediaType
+	}{
+		{name: "Type and subtype", value: "application/json", result: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}},
+		{name: "Type and subtype with whitespaces", value: "application/json   ", result: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}},
+		{name: "Type, subtype, parameter", value: "a/b;c=d", result: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{"c": "d"}}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result, err := contenttype.ParseMediaType(testCase.value)
+			if err != nil {
+				t.Errorf("Expected an error for %s", testCase.value)
+			} else if result.Type != testCase.result.Type || result.Subtype != testCase.result.Subtype {
+				t.Fatalf("Invalid content type, got %s/%s, exptected %s/%s for %s", result.Type, result.Subtype, testCase.result.Type, testCase.result.Subtype, testCase.value)
+			} else if !reflect.DeepEqual(result.Parameters, testCase.result.Parameters) {
+				t.Fatalf("Wrong parameters, got %v, expected %v for %s", result.Parameters, testCase.result.Parameters, testCase.value)
+			}
+		})
+	}
+}
+
+func TestParseMediaTypeErrors(t *testing.T) {
+	testCases := []struct {
+		name  string
+		value string
+		err   error
+	}{
+		{name: "Empty string", value: "", err: contenttype.ErrInvalidMediaType},
+		{name: "Subtype only", value: "/b", err: contenttype.ErrInvalidMediaType},
+		{name: "Type only", value: "a/", err: contenttype.ErrInvalidMediaType},
+		{name: "Type, subtype, invalid parameter", value: "a/b;c", err: contenttype.ErrInvalidParameter},
+		{name: "Type and parameter without subtype", value: "a/;c", err: contenttype.ErrInvalidMediaType},
+		{name: "Type and subtype with remaining data", value: "a/b c", err: contenttype.ErrInvalidMediaType},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			_, err := contenttype.ParseMediaType(testCase.value)
+			if err == nil {
+				t.Errorf("Expected an error for %s", testCase.value)
+			} else if !errors.Is(err, testCase.err) {
+				t.Errorf("Unexpected error \"%v\", expected \"%v\" for %s", err, testCase.err, testCase.value)
+			}
+		})
+	}
+}
+
 func TestString(t *testing.T) {
 	testCases := []struct {
 		name   string
