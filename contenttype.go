@@ -272,29 +272,8 @@ func getPrecedence(checkMediaType, mediaType MediaType) bool {
 
 // Parses the string and returns an instance of MediaType struct.
 func NewMediaType(s string) MediaType {
-	mediaType := MediaType{
-		Parameters: Parameters{},
-	}
-	var consumed bool
-	if mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s); !consumed {
-		return MediaType{}
-	}
-
-	for len(s) > 0 && s[0] == ';' {
-		s = s[1:] // skip the semicolon
-
-		key, value, remaining, consumed := consumeParameter(s)
-		if !consumed {
-			return MediaType{}
-		}
-
-		s = remaining
-
-		mediaType.Parameters[key] = value
-	}
-
-	// there must not be anything left after parsing the media type
-	if len(s) > 0 {
+	mediaType, err := ParseMediaType(s)
+	if err != nil {
 		return MediaType{}
 	}
 
