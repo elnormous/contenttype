@@ -272,7 +272,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 		{"Wildcard type only", "*/b", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.ErrInvalidMediaType},
 		{"Invalid character in weight", "a/b;q=a", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.ErrInvalidWeight},
 		{"Weight bigger than 1.0", "a/b;q=11", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.ErrInvalidWeight},
-		{"More than 3 digitas after dot", "a/b;q=1.0000", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.ErrInvalidWeight},
+		{"More than 3 digits after dot", "a/b;q=1.0000", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.ErrInvalidWeight},
 		{"Invalid character after dot", "a/b;q=1.a", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.ErrInvalidWeight},
 		{"Invalid digit after dot", "a/b;q=1.100", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.ErrInvalidWeight},
 		{"Type with weight zero only", "a/b;q=0", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.ErrNoAcceptableTypeFound},
