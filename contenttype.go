@@ -239,6 +239,7 @@ func getWeight(s string) (int, bool) {
 }
 
 func compareMediaTypes(checkMediaType, mediaType MediaType) bool {
+	// RFC 7231, 5.3.2. Accept
 	if (checkMediaType.Type == "*" || checkMediaType.Type == mediaType.Type) &&
 		(checkMediaType.Subtype == "*" || checkMediaType.Subtype == mediaType.Subtype) {
 
@@ -255,6 +256,7 @@ func compareMediaTypes(checkMediaType, mediaType MediaType) bool {
 }
 
 func getPrecedence(checkMediaType, mediaType MediaType) bool {
+	// RFC 7231, 5.3.2. Accept
 	if len(mediaType.Type) == 0 || len(mediaType.Subtype) == 0 { // not set
 		return true
 	}

@@ -275,6 +275,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 		{"More than 3 digits after dot", "a/b;q=1.0000", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.ErrInvalidWeight},
 		{"Invalid character after dot", "a/b;q=1.a", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.ErrInvalidWeight},
 		{"Invalid digit after dot", "a/b;q=1.100", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.ErrInvalidWeight},
+		{"Weight with two dots", "a/b;q=0..1", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.ErrInvalidWeight},
 		{"Type with weight zero only", "a/b;q=0", []contenttype.MediaType{{"a", "b", contenttype.Parameters{}}}, contenttype.ErrNoAcceptableTypeFound},
 		{"No value for extension parameter", "a/a;q=1;ext=", []contenttype.MediaType{{"a", "a", contenttype.Parameters{}}}, contenttype.ErrInvalidParameter},
 	}
