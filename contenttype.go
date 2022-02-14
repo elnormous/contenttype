@@ -293,6 +293,11 @@ func NewMediaType(s string) MediaType {
 		mediaType.Parameters[key] = value
 	}
 
+	// there must not be anything left after parsing the media type
+	if len(s) > 0 {
+		return MediaType{}
+	}
+
 	return mediaType
 }
 
