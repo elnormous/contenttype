@@ -226,7 +226,7 @@ func getWeight(s string) (int, bool) {
 		} else {
 			// the remaining characters must be digits and the value can not be greater than 1.000
 			if (s[0] == '1' && s[i] != '0') ||
-				(s[i] < '0' || s[i] > '9') {
+				!isDigitChar(s[i]) {
 				return 0, false
 			}
 
