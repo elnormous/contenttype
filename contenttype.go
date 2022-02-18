@@ -131,7 +131,7 @@ func consumeType(s string) (string, string, string, bool) {
 	// RFC 7231, 3.1.1.1. Media Type
 	s = skipWhitespaces(s)
 
-	var t, subt string
+	var t, st string
 	var consumed bool
 	t, s, consumed = consumeToken(s)
 	if !consumed {
@@ -144,18 +144,18 @@ func consumeType(s string) (string, string, string, bool) {
 
 	s = s[1:] // skip the slash
 
-	subt, s, consumed = consumeToken(s)
+	st, s, consumed = consumeToken(s)
 	if !consumed {
 		return "", "", s, false
 	}
 
-	if t == "*" && subt != "*" {
+	if t == "*" && st != "*" {
 		return "", "", s, false
 	}
 
 	s = skipWhitespaces(s)
 
-	return t, subt, s, true
+	return t, st, s, true
 }
 
 func consumeParameter(s string) (string, string, string, bool) {
@@ -270,7 +270,7 @@ func getPrecedence(checkMediaType, mediaType MediaType) bool {
 	return false
 }
 
-// Parses the string and returns an instance of MediaType struct.
+// NewMediaType parses the string and returns an instance of MediaType struct.
 func NewMediaType(s string) MediaType {
 	mediaType, err := ParseMediaType(s)
 	if err != nil {
@@ -300,7 +300,7 @@ func (mediaType *MediaType) String() string {
 	return stringBuilder.String()
 }
 
-// Gets the content of Content-Type header, parses it, and returns the parsed MediaType.
+// GetMediaType gets the content of Content-Type header, parses it, and returns the parsed MediaType.
 // If the request does not contain the Content-Type header, an empty MediaType is returned.
 func GetMediaType(request *http.Request) (MediaType, error) {
 	// RFC 7231, 3.1.1.5. Content-Type
@@ -312,7 +312,7 @@ func GetMediaType(request *http.Request) (MediaType, error) {
 	return ParseMediaType(contentTypeHeaders[0])
 }
 
-// Parses the given string as a MIME media type (with optional parameters) and returns it as a MediaType.
+// ParseMediaType parses the given string as a MIME media type (with optional parameters) and returns it as a MediaType.
 // If the string cannot be parsed an appropriate error is returned.
 func ParseMediaType(s string) (MediaType, error) {
 	// RFC 7231, 3.1.1.1. Media Type
@@ -345,7 +345,7 @@ func ParseMediaType(s string) (MediaType, error) {
 	return mediaType, nil
 }
 
-// Choses a media type from available media types according to the Accept.
+// GetAcceptableMediaType chooses a media type from available media types according to the Accept.
 // Returns the most suitable media type or an error if no type can be selected.
 func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaType) (MediaType, Parameters, error) {
 	// RFC 7231, 5.3.2. Accept
@@ -361,7 +361,7 @@ func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaTy
 	return GetAcceptableMediaTypeFromHeader(acceptHeaders[0], availableMediaTypes)
 }
 
-// Choses a media type from available media types according to the specified Accept header value.
+// GetAcceptableMediaTypeFromHeader chooses a media type from available media types according to the specified Accept header value.
 // Returns the most suitable media type or an error if no type can be selected.
 func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []MediaType) (MediaType, Parameters, error) {
 	s := headerValue
