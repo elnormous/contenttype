@@ -1,4 +1,4 @@
-// Package implement HTTP Content-Type and Accept header parsers.
+// Package contenttype implements HTTP Content-Type and Accept header parsers.
 package contenttype
 
 import (
@@ -8,26 +8,26 @@ import (
 )
 
 var (
-	// Media type in the Content-Type or Accept header is syntactically invalid.
+	// ErrInvalidMediaType is returned when the media type in the Content-Type or Accept header is syntactically invalid.
 	ErrInvalidMediaType = errors.New("invalid media type")
-	// Range of media types in the Content-Type or Accept header is syntactically invalid.
+	// ErrInvalidMediaRange is returned when the range of media types in the Content-Type or Accept header is syntactically invalid.
 	ErrInvalidMediaRange = errors.New("invalid media range")
-	// Media type parameter in the Content-Type or Accept header is syntactically invalid.
+	// ErrInvalidParameter is returned when the media type parameter in the Content-Type or Accept header is syntactically invalid.
 	ErrInvalidParameter = errors.New("invalid parameter")
-	// Media type extension parameter in the Content-Type or Accept header is syntactically invalid.
+	// ErrInvalidExtensionParameter is returned when the media type extension parameter in the Content-Type or Accept header is syntactically invalid.
 	ErrInvalidExtensionParameter = errors.New("invalid extension parameter")
-	// Accept header contains only media types that are not in the acceptable media type list.
+	// ErrNoAcceptableTypeFound is returned when Accept header contains only media types that are not in the acceptable media type list.
 	ErrNoAcceptableTypeFound = errors.New("no acceptable type found")
-	// Acceptbale media type list is empty.
+	// ErrNoAvailableTypeGiven is returned when the acceptable media type list is empty.
 	ErrNoAvailableTypeGiven = errors.New("no available type given")
-	// Media type weight in the Accept header is syntactically invalid.
+	// ErrInvalidWeight is returned when the media type weight in Accept header is syntactically invalid.
 	ErrInvalidWeight = errors.New("invalid wieght")
 )
 
-// A map for media type parameters.
+// Parameters represents media type parameters as a key-value map.
 type Parameters = map[string]string
 
-// A struct for media type which holds type, subtype and parameters.
+// MediaType holds the type, subtype and parameters of a media type.
 type MediaType struct {
 	Type       string
 	Subtype    string
