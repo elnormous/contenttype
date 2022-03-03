@@ -288,13 +288,13 @@ func (mediaType *MediaType) String() string {
 		stringBuilder.WriteString(mediaType.Type)
 		stringBuilder.WriteByte('/')
 		stringBuilder.WriteString(mediaType.Subtype)
-	}
 
-	for key, value := range mediaType.Parameters {
-		stringBuilder.WriteByte(';')
-		stringBuilder.WriteString(key)
-		stringBuilder.WriteByte('=')
-		stringBuilder.WriteString(value)
+		for key, value := range mediaType.Parameters {
+			stringBuilder.WriteByte(';')
+			stringBuilder.WriteString(key)
+			stringBuilder.WriteByte('=')
+			stringBuilder.WriteString(value)
+		}
 	}
 
 	return stringBuilder.String()
