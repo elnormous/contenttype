@@ -300,6 +300,19 @@ func (mediaType *MediaType) String() string {
 	return stringBuilder.String()
 }
 
+// Mime returns the MIME type without any of the parameters
+func (mediaType MediaType) Mime() string {
+	var stringBuilder strings.Builder
+
+	if len(mediaType.Type) > 0 || len(mediaType.Subtype) > 0 {
+		stringBuilder.WriteString(mediaType.Type)
+		stringBuilder.WriteByte('/')
+		stringBuilder.WriteString(mediaType.Subtype)
+	}
+
+	return stringBuilder.String()
+}
+
 // GetMediaType gets the content of Content-Type header, parses it, and returns the parsed MediaType.
 // If the request does not contain the Content-Type header, an empty MediaType is returned.
 func GetMediaType(request *http.Request) (MediaType, error) {
