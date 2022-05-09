@@ -300,8 +300,8 @@ func (mediaType *MediaType) String() string {
 	return stringBuilder.String()
 }
 
-// Mime returns the MIME type without any of the parameters
-func (mediaType MediaType) Mime() string {
+// MIME returns the MIME type without any of the parameters
+func (mediaType MediaType) MIME() string {
 	var stringBuilder strings.Builder
 
 	if len(mediaType.Type) > 0 || len(mediaType.Subtype) > 0 {
