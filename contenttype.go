@@ -21,7 +21,7 @@ var (
 	// ErrNoAvailableTypeGiven is returned when the acceptable media type list is empty.
 	ErrNoAvailableTypeGiven = errors.New("no available type given")
 	// ErrInvalidWeight is returned when the media type weight in Accept header is syntactically invalid.
-	ErrInvalidWeight = errors.New("invalid wieght")
+	ErrInvalidWeight = errors.New("invalid weight")
 )
 
 // Parameters represents media type parameters as a key-value map.
