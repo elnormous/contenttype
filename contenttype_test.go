@@ -2,6 +2,7 @@ package contenttype_test
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"reflect"
@@ -108,6 +109,40 @@ func TestString(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMediaType_MIME(t *testing.T) {
+	testCases := []struct {
+		name   string
+		value  contenttype.MediaType
+		result string
+	}{
+		{name: "Empty media type", value: contenttype.MediaType{}, result: ""},
+		{name: "Type and subtype", value: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}, result: "application/json"},
+		{name: "Type, subtype, parameter", value: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{"c": "d"}}, result: "a/b"},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result := testCase.value.MIME()
+
+			if result != testCase.result {
+				t.Errorf("Invalid result type, got %s, exptected %s", result, testCase.result)
+			}
+		})
+	}
+}
+
+// ExampleMediaType_MIME comparing to MIME types
+func ExampleMediaType_MIME() {
+	mt := contenttype.NewMediaType("application/json; charset=utf-8")
+	fmt.Printf("MIME(): %s\n", mt.MIME())
+	fmt.Printf("matches: application/json: %v\n", mt.MIME() == "application/json")
+	fmt.Printf("matches: application/*: %v\n", mt.MIME() == "application/*")
+	fmt.Printf("matches: text/plain: %v\n", mt.MIME() == "text/plain")
+	// Output: MIME(): application/json
+	// matches: application/json: true
+	// matches: application/*: false
+	// matches: text/plain: false
 }
 
 func TestGetMediaType(t *testing.T) {
