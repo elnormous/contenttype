@@ -424,7 +424,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 	}
 }
 
-func TestMediaType_EqualsExactly(t *testing.T) {
+func TestMediaType_Equal(t *testing.T) {
 	// create a map of items to turn into a permutation, these should all be
 	// different
 	mtut := map[string]contenttype.MediaType{
@@ -460,22 +460,22 @@ func TestMediaType_EqualsExactly(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.a.EqualsExactly(tt.b); got != tt.want {
-				t.Errorf("MediaType.EqualsExactly() = %v, want %v", got, tt.want)
+			if got := tt.a.Equal(tt.b); got != tt.want {
+				t.Errorf("MediaType.Equal() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
 // ExampleMediaType_MIME comparing two media types with their parameters
-func ExampleMediaType_EqualsExactly() {
+func ExampleMediaType_Equal() {
 	base := contenttype.NewMediaType("application/json; charset=utf-8")
 	noMatch := contenttype.NewMediaType("application/json")
 	match := contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{"charset": "utf-8"}}
 
-	fmt.Printf("matches exactly: %v\n", base.EqualsExactly(base))
-	fmt.Printf("matches exactly: %v\n", base.EqualsExactly(noMatch))
-	fmt.Printf("matches exactly: %v\n", base.EqualsExactly(match))
+	fmt.Printf("matches exactly: %v\n", base.Equal(base))
+	fmt.Printf("matches exactly: %v\n", base.Equal(noMatch))
+	fmt.Printf("matches exactly: %v\n", base.Equal(match))
 	// Output: matches exactly: true
 	// matches exactly: false
 	// matches exactly: true

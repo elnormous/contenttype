@@ -314,9 +314,9 @@ func (mediaType MediaType) MIME() string {
 	return stringBuilder.String()
 }
 
-// EqualsExactly checks whether the provided MIME media type matches this one
+// Equal checks whether the provided MIME media type matches this one
 // including all parameters
-func (mediaType MediaType) EqualsExactly(mt MediaType) bool {
+func (mediaType MediaType) Equal(mt MediaType) bool {
 	return reflect.DeepEqual(mediaType, mt)
 }
 
