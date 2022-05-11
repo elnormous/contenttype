@@ -11,6 +11,18 @@ import (
 	"github.com/elnormous/contenttype"
 )
 
+var (
+	// selection of pre-defined values used for testing
+	instEmpty        contenttype.MediaType = contenttype.MediaType{}
+	instSimple       contenttype.MediaType = contenttype.NewMediaType("text/plain")
+	instWildcard     contenttype.MediaType = contenttype.NewMediaType("*/*")
+	instTextWildcard contenttype.MediaType = contenttype.NewMediaType("text/*")
+	instParams       contenttype.MediaType = contenttype.NewMediaType("application/json; q=0.001; charset=utf-8")
+	instJSON         contenttype.MediaType = contenttype.NewMediaType("application/json")
+	instJSON2        contenttype.MediaType = contenttype.NewMediaType("application/json; charset=utf-8")
+	instAppWildcard  contenttype.MediaType = contenttype.NewMediaType("application/*")
+)
+
 func TestNewMediaType(t *testing.T) {
 	testCases := []struct {
 		name   string
@@ -127,6 +139,31 @@ func TestMediaType_MIME(t *testing.T) {
 
 			if result != testCase.result {
 				t.Errorf("Invalid result type, got %s, exptected %s", result, testCase.result)
+			}
+		})
+	}
+}
+
+func TestMediaType_IsWildcard(t *testing.T) {
+	testCases := []struct {
+		name   string
+		value  contenttype.MediaType
+		result bool
+	}{
+		{name: "Empty media type", value: contenttype.MediaType{}, result: false},
+		{name: "Type and subtype", value: contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{}}, result: false},
+		{name: "Type, subtype, parameter", value: contenttype.MediaType{Type: "a", Subtype: "b", Parameters: contenttype.Parameters{"c": "d"}}, result: false},
+		{name: "text/*", value: contenttype.MediaType{Type: "text", Subtype: "*"}, result: true},
+		{name: "application/*; charset=utf-8", value: contenttype.MediaType{Type: "application", Subtype: "*", Parameters: contenttype.Parameters{"charset": "utf-8"}}, result: true},
+		{name: "*/*", value: contenttype.MediaType{Type: "*", Subtype: "*"}, result: true},
+		// invalid MIME type, but will return true
+		{name: "*/json", value: contenttype.MediaType{Type: "*", Subtype: "json"}, result: true},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result := testCase.value.IsWildcard()
+			if result != testCase.result {
+				t.Errorf("Invalid result type, got %v, expected %v", result, testCase.result)
 			}
 		})
 	}
@@ -382,6 +419,212 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 				t.Errorf("Expected an error for %s", testCase.header)
 			} else if !errors.Is(err, testCase.err) {
 				t.Errorf("Unexpected error \"%v\", expected \"%v\" for %s", err, testCase.err, testCase.header)
+			}
+		})
+	}
+}
+
+func TestMediaType_Equal(t *testing.T) {
+	// create a map of items to turn into a permutation, these should all be
+	// different
+	mtut := map[string]contenttype.MediaType{
+		"empty":        instEmpty,
+		"simple":       instSimple,
+		"wildcard":     instWildcard,
+		"textwildcard": instTextWildcard,
+		"params":       instParams,
+		"json":         instJSON,
+		"json2":        instJSON2,
+		"appwildcard":  instAppWildcard,
+	}
+
+	type test struct {
+		name string
+		a    contenttype.MediaType
+		b    contenttype.MediaType
+		want bool
+	}
+	tests := []test{}
+
+	// create permutation
+	for outerName, outerMt := range mtut {
+		for innerName, innerMt := range mtut {
+			tests = append(tests,
+				test{
+					fmt.Sprintf("%s vs %s", outerName, innerName),
+					outerMt,
+					innerMt,
+					outerName == innerName,
+				})
+		}
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.a.Equal(tt.b); got != tt.want {
+				t.Errorf("MediaType.Equal() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// ExampleMediaType_MIME comparing two media types with their parameters
+func ExampleMediaType_Equal() {
+	base := contenttype.NewMediaType("application/json; charset=utf-8")
+	noMatch := contenttype.NewMediaType("application/json")
+	match := contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{"charset": "utf-8"}}
+
+	fmt.Printf("matches exactly: %v\n", base.Equal(base))
+	fmt.Printf("matches exactly: %v\n", base.Equal(noMatch))
+	fmt.Printf("matches exactly: %v\n", base.Equal(match))
+	// Output: matches exactly: true
+	// matches exactly: false
+	// matches exactly: true
+}
+
+func TestMediaType_EqualsMIME(t *testing.T) {
+	// create a map of items to turn into a permutation, these should all be
+	// different
+	mtut := map[string]contenttype.MediaType{
+		"empty":        instEmpty,
+		"simple":       instSimple,
+		"wildcard":     instWildcard,
+		"textwildcard": instTextWildcard,
+		"appwildcard":  instAppWildcard,
+		"params":       instParams,
+	}
+
+	type test struct {
+		name string
+		a    contenttype.MediaType
+		b    contenttype.MediaType
+		want bool
+	}
+	tests := []test{
+		// all of these are equal
+		{"params vs json", instParams, instJSON, true},
+		{"params vs json2", instParams, instJSON2, true},
+		{"json vs params", instJSON, instParams, true},
+		{"json2 vs params", instJSON2, instParams, true},
+		{"json vs json", instJSON, instJSON, true},
+		{"json vs json2", instJSON, instJSON2, true},
+		{"json2 vs json", instJSON2, instJSON, true},
+		{"json2 vs json2", instJSON2, instJSON2, true},
+	}
+
+	// create permutation of the remaining tests from the map which are only equal
+	// to themselves
+	for outerName, outerMt := range mtut {
+		for innerName, innerMt := range mtut {
+			tests = append(tests,
+				test{
+					fmt.Sprintf("%s vs %s", outerName, innerName),
+					outerMt,
+					innerMt,
+					outerName == innerName,
+				})
+		}
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.a.EqualsMIME(tt.b); got != tt.want {
+				t.Errorf("MediaType.EqualsMIME() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// ExampleMediaType_EqualsMIME comparing only on the MIME media type which must
+// match both the type and subtype
+func ExampleMediaType_EqualsMIME() {
+	base := contenttype.NewMediaType("application/json; q=0.01; charset=utf-8")
+	noMatch := contenttype.NewMediaType("text/json")
+	partialWildcard := contenttype.NewMediaType("application/*")
+	diffParams := contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{"charset": "utf-8"}}
+	match := contenttype.MediaType{Type: "application", Subtype: "json"}
+
+	fmt.Printf("matches exactly: %v\n", base.EqualsMIME(base))
+	fmt.Printf("matches exactly: %v\n", base.EqualsMIME(noMatch))
+	fmt.Printf("matches exactly: %v\n", base.EqualsMIME(partialWildcard))
+	fmt.Printf("matches exactly: %v\n", base.EqualsMIME(diffParams))
+	fmt.Printf("matches exactly: %v\n", base.EqualsMIME(match))
+	// Output: matches exactly: true
+	// matches exactly: false
+	// matches exactly: false
+	// matches exactly: true
+	// matches exactly: true
+}
+
+func TestMediaType_Matches(t *testing.T) {
+	tests := []struct {
+		name string
+		a    contenttype.MediaType
+		b    contenttype.MediaType
+		want bool
+	}{
+		{"empty matches empty", instEmpty, instEmpty, true},
+		{"text/plain matches text/plain", instSimple, instSimple, true},
+		{"text/* matches text/plain", instTextWildcard, instSimple, true},
+		{"*/* matches text/plain", instWildcard, instSimple, true},
+		{"text/plain matches text/*", instSimple, instTextWildcard, true},
+		{"text/plain matches */*", instSimple, instWildcard, true},
+		{"text/plain doesn't match application/*", instSimple, instAppWildcard, false},
+		{"text/* doesn't match application/*", instTextWildcard, instAppWildcard, false},
+		{"*/* matches application/*", instWildcard, instAppWildcard, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.a.Matches(tt.b); got != tt.want {
+				t.Errorf("MediaType.Matches() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// ExampleMediaType_Matches comparing only on the MIME media type which must
+// either match exactly or be the wildcard token
+func ExampleMediaType_Matches() {
+	base := contenttype.NewMediaType("application/json; q=0.01; charset=utf-8")
+	noMatch := contenttype.NewMediaType("text/json")
+	partialWildcard := contenttype.NewMediaType("application/*")
+	fullWildcard := contenttype.NewMediaType("*/*")
+	diffParams := contenttype.MediaType{Type: "application", Subtype: "json", Parameters: contenttype.Parameters{"charset": "utf-8"}}
+	match := contenttype.MediaType{Type: "application", Subtype: "json"}
+
+	fmt.Printf("matches exactly: %v\n", base.Matches(base))
+	fmt.Printf("matches exactly: %v\n", base.Matches(noMatch))
+	fmt.Printf("matches exactly: %v\n", base.Matches(partialWildcard))
+	fmt.Printf("matches exactly: %v\n", base.Matches(fullWildcard))
+	fmt.Printf("matches exactly: %v\n", base.Matches(diffParams))
+	fmt.Printf("matches exactly: %v\n", base.Matches(match))
+	// Output: matches exactly: true
+	// matches exactly: false
+	// matches exactly: true
+	// matches exactly: true
+	// matches exactly: true
+	// matches exactly: true
+}
+
+func TestMediaType_MatchesAny(t *testing.T) {
+	tests := []struct {
+		name string
+		a    contenttype.MediaType
+		bs   []contenttype.MediaType
+		want bool
+	}{
+		{"vs no list", instEmpty, nil, false},
+		{"vs empty list", instEmpty, []contenttype.MediaType{}, false},
+		{"empty vs matching single", instEmpty, []contenttype.MediaType{instEmpty}, true},
+		{"empty vs non-matching single", instEmpty, []contenttype.MediaType{instJSON}, false},
+		{"empty vs second match", instEmpty, []contenttype.MediaType{instJSON, instEmpty}, true},
+		{"specific vs wildcard only", instSimple, []contenttype.MediaType{instTextWildcard}, true},
+		{"specific vs second item wildcard", instSimple, []contenttype.MediaType{instJSON, instTextWildcard}, true},
+		{"wildcard vs anything", instWildcard, []contenttype.MediaType{instJSON}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.a.MatchesAny(tt.bs...); got != tt.want {
+				t.Errorf("MediaType.MatchesAny() = %v, want %v", got, tt.want)
 			}
 		})
 	}

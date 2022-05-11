@@ -4,6 +4,7 @@ package contenttype
 import (
 	"errors"
 	"net/http"
+	"reflect"
 	"strings"
 )
 
@@ -311,6 +312,40 @@ func (mediaType MediaType) MIME() string {
 	}
 
 	return stringBuilder.String()
+}
+
+// Equal checks whether the provided MIME media type matches this one
+// including all parameters
+func (mediaType MediaType) Equal(mt MediaType) bool {
+	return reflect.DeepEqual(mediaType, mt)
+}
+
+// EqualsMIME checks whether the base MIME types match
+func (mediaType MediaType) EqualsMIME(mt MediaType) bool {
+	return (mediaType.Type == mt.Type) && (mediaType.Subtype == mt.Subtype)
+}
+
+// Matches checks whether the MIME media types match handling wildcards in either
+func (mediaType MediaType) Matches(mt MediaType) bool {
+	t := mediaType.Type == mt.Type || (mediaType.Type == "*") || (mt.Type == "*")
+	st := mediaType.Subtype == mt.Subtype || mediaType.Subtype == "*" || mt.Subtype == "*"
+	return t && st
+}
+
+// MatchesAny checks whether the MIME media types matches any of the specified
+// list of mediatype handling wildcards in any of them
+func (mediaType MediaType) MatchesAny(mts ...MediaType) bool {
+	for _, mt := range mts {
+		if mediaType.Matches(mt) {
+			return true
+		}
+	}
+	return false
+}
+
+// IsWildcard returns true if either the Type or Subtype are the wildcard character '*'
+func (mediaType MediaType) IsWildcard() bool {
+	return mediaType.Type == `*` || mediaType.Subtype == `*`
 }
 
 // GetMediaType gets the content of Content-Type header, parses it, and returns the parsed MediaType.
