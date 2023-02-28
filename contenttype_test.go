@@ -3,8 +3,8 @@ package contenttype_test
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 
@@ -209,10 +209,7 @@ func TestGetMediaType(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			request, err := http.NewRequest(http.MethodGet, "http://test.test", nil)
-			if err != nil {
-				log.Fatal(err)
-			}
+			request := httptest.NewRequest(http.MethodGet, "http://test.test", nil)
 
 			if len(testCase.header) > 0 {
 				request.Header.Set("Content-Type", testCase.header)
@@ -253,16 +250,13 @@ func TestGetMediaTypeErrors(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			request, err := http.NewRequest(http.MethodGet, "http://test.test", nil)
-			if err != nil {
-				log.Fatal(err)
-			}
+			request := httptest.NewRequest(http.MethodGet, "http://test.test", nil)
 
 			if len(testCase.header) > 0 {
 				request.Header.Set("Content-Type", testCase.header)
 			}
 
-			_, err = contenttype.GetMediaType(request)
+			_, err := contenttype.GetMediaType(request)
 			if err == nil {
 				t.Errorf("Expected an error for %s", testCase.header)
 			} else if !errors.Is(err, testCase.err) {
@@ -353,10 +347,7 @@ func TestGetAcceptableMediaType(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			request, err := http.NewRequest(http.MethodGet, "http://test.test", nil)
-			if err != nil {
-				log.Fatal(err)
-			}
+			request := httptest.NewRequest(http.MethodGet, "http://test.test", nil)
 
 			if len(testCase.header) > 0 {
 				request.Header.Set("Accept", testCase.header)
@@ -405,16 +396,13 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			request, err := http.NewRequest(http.MethodGet, "http://test.test", nil)
-			if err != nil {
-				log.Fatal(err)
-			}
+			request := httptest.NewRequest(http.MethodGet, "http://test.test", nil)
 
 			if len(testCase.header) > 0 {
 				request.Header.Set("Accept", testCase.header)
 			}
 
-			_, _, err = contenttype.GetAcceptableMediaType(request, testCase.availableMediaTypes)
+			_, _, err := contenttype.GetAcceptableMediaType(request, testCase.availableMediaTypes)
 			if err == nil {
 				t.Errorf("Expected an error for %s", testCase.header)
 			} else if !errors.Is(err, testCase.err) {
