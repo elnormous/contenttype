@@ -95,6 +95,14 @@ func skipWhitespaces(s string) string {
 	return ""
 }
 
+func skipCharacter(s string, c byte) (remaining string, consumed bool) {
+	if len(s) == 0 || s[0] != c {
+		return s, false
+	}
+
+	return s[1:], true
+}
+
 func consumeToken(s string) (token, remaining string, consumed bool) {
 	// RFC 7230, 3.2.6. Field Value Components
 	for i := 0; i < len(s); i++ {
@@ -139,11 +147,11 @@ func consumeType(s string) (string, string, string, bool) {
 		return "", "", s, false
 	}
 
-	if len(s) == 0 || s[0] != '/' {
+	var skipped bool
+	s, skipped = skipCharacter(s, '/')
+	if !skipped {
 		return "", "", s, false
 	}
-
-	s = s[1:] // skip the slash
 
 	st, s, consumed = consumeToken(s)
 	if !consumed {
@@ -169,26 +177,21 @@ func consumeParameter(s string) (string, string, string, bool) {
 		return "", "", s, false
 	}
 
-	if len(s) == 0 || s[0] != '=' {
+	var skipped bool
+	s, skipped = skipCharacter(s, '=')
+	if !skipped {
 		return "", "", s, false
 	}
 
-	s = s[1:] // skip the equal sign
-
 	var value string
-	if len(s) > 0 && s[0] == '"' {
-		s = s[1:] // skip the opening quote
-
+	if s, skipped = skipCharacter(s, '"'); skipped {
 		if value, s, consumed = consumeQuotedString(s); !consumed {
 			return "", "", s, false
 		}
 
-		if len(s) == 0 || s[0] != '"' {
+		if s, skipped = skipCharacter(s, '"'); !skipped { // skip the closing quote
 			return "", "", s, false
 		}
-
-		s = s[1:] // skip the closing quote
-
 	} else {
 		if value, s, consumed = consumeToken(s); !consumed {
 			return "", "", s, false
@@ -424,10 +427,11 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 	for mediaTypeCount := 0; len(s) > 0; mediaTypeCount++ {
 		if mediaTypeCount > 0 {
 			// every media type after the first one must start with a comma
-			if s[0] != ',' {
+			var skipped bool
+			s, skipped = skipCharacter(s, ',')
+			if !skipped {
 				break
 			}
-			s = s[1:] // skip the comma
 		}
 
 		acceptableMediaType := MediaType{
