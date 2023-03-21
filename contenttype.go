@@ -195,10 +195,10 @@ func consumeParameter(s string) (string, string, string, bool) {
 	return key, value, skipWhitespaces(s), true
 }
 
-func getWeight(s string) (int, bool) {
+func getWeight(s string) (uint, bool) {
 	// RFC 7231, 5.3.1. Quality Values
-	result := 0
-	multiplier := 1000
+	result := uint(0)
+	multiplier := uint(1000)
 
 	// the string must not have more than three digits after the decimal point
 	if len(s) > 5 {
@@ -212,7 +212,7 @@ func getWeight(s string) (int, bool) {
 				return 0, false
 			}
 
-			result = int(s[i]-'0') * multiplier
+			result = uint(s[i]-'0') * multiplier
 			multiplier /= 10
 		} else if i == 1 {
 			// the second character must be a dot
@@ -226,7 +226,7 @@ func getWeight(s string) (int, bool) {
 				return 0, false
 			}
 
-			result += int(s[i]-'0') * multiplier
+			result += uint(s[i]-'0') * multiplier
 			multiplier /= 10
 		}
 	}
@@ -412,11 +412,11 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 	weights := make([]struct {
 		mediaType           MediaType
 		extensionParameters Parameters
-		weight              int
-		order               int
+		weight              uint
+		order               uint
 	}, len(availableMediaTypes))
 
-	for mediaTypeCount := 0; len(s) > 0; mediaTypeCount++ {
+	for mediaTypeCount := uint(0); len(s) > 0; mediaTypeCount++ {
 		if mediaTypeCount > 0 {
 			// every media type after the first one must start with a comma
 			var skipped bool
@@ -434,7 +434,7 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 			return MediaType{}, Parameters{}, ErrInvalidMediaType
 		}
 
-		weight := 1000 // 1.000
+		weight := uint(1000) // 1.000
 
 		// media type parameters
 		for len(s) > 0 && s[0] == ';' {
