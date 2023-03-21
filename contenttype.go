@@ -138,8 +138,6 @@ func consumeQuotedString(s string) (token, remaining string, consumed bool) {
 
 func consumeType(s string) (string, string, string, bool) {
 	// RFC 7231, 3.1.1.1. Media Type
-	s = skipWhitespaces(s)
-
 	var t, st string
 	var consumed bool
 	t, s, consumed = consumeToken(s)
@@ -162,18 +160,14 @@ func consumeType(s string) (string, string, string, bool) {
 		return "", "", s, false
 	}
 
-	s = skipWhitespaces(s)
-
-	return t, st, s, true
+	return t, st, skipWhitespaces(s), true
 }
 
 func consumeParameter(s string) (string, string, string, bool) {
 	// RFC 7231, 3.1.1.1. Media Type
-	s = skipWhitespaces(s)
-
 	var consumed bool
 	var key string
-	if key, s, consumed = consumeToken(s); !consumed {
+	if key, s, consumed = consumeToken(skipWhitespaces(s)); !consumed {
 		return "", "", s, false
 	}
 
@@ -198,9 +192,7 @@ func consumeParameter(s string) (string, string, string, bool) {
 		}
 	}
 
-	s = skipWhitespaces(s)
-
-	return key, value, s, true
+	return key, value, skipWhitespaces(s), true
 }
 
 func getWeight(s string) (int, bool) {
@@ -371,7 +363,7 @@ func ParseMediaType(s string) (MediaType, error) {
 		Parameters: Parameters{},
 	}
 	var consumed bool
-	if mediaType.Type, mediaType.Subtype, s, consumed = consumeType(s); !consumed {
+	if mediaType.Type, mediaType.Subtype, s, consumed = consumeType(skipWhitespaces(s)); !consumed {
 		return MediaType{}, ErrInvalidMediaType
 	}
 
@@ -438,7 +430,7 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 			Parameters: Parameters{},
 		}
 		var consumed bool
-		if acceptableMediaType.Type, acceptableMediaType.Subtype, s, consumed = consumeType(s); !consumed {
+		if acceptableMediaType.Type, acceptableMediaType.Subtype, s, consumed = consumeType(skipWhitespaces(s)); !consumed {
 			return MediaType{}, Parameters{}, ErrInvalidMediaType
 		}
 
