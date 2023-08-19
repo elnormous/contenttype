@@ -65,7 +65,7 @@ func TestParseMediaType(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			result, err := contenttype.ParseMediaType(testCase.value)
 			if err != nil {
-				t.Errorf("Expected an error for %s", testCase.value)
+				t.Errorf("Unexpected error \"%v\" for %s", err, testCase.value)
 			} else if result.Type != testCase.result.Type || result.Subtype != testCase.result.Subtype {
 				t.Fatalf("Invalid content type, got %s/%s, exptected %s/%s for %s", result.Type, result.Subtype, testCase.result.Type, testCase.result.Subtype, testCase.value)
 			} else if !reflect.DeepEqual(result.Parameters, testCase.result.Parameters) {
