@@ -432,7 +432,7 @@ func TestMediaType_Equal(t *testing.T) {
 		b    contenttype.MediaType
 		want bool
 	}
-	tests := []test{}
+	var tests []test
 
 	// create permutation
 	for outerName, outerMt := range mediaTypes {
