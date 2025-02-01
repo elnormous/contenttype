@@ -415,7 +415,7 @@ func TestGetAcceptableMediaTypeErrors(t *testing.T) {
 func TestMediaType_Equal(t *testing.T) {
 	// create a map of items to turn into a permutation, these should all be
 	// different
-	mtut := map[string]contenttype.MediaType{
+	mediaTypes := map[string]contenttype.MediaType{
 		"empty":        instEmpty,
 		"simple":       instSimple,
 		"wildcard":     instWildcard,
@@ -435,8 +435,8 @@ func TestMediaType_Equal(t *testing.T) {
 	tests := []test{}
 
 	// create permutation
-	for outerName, outerMt := range mtut {
-		for innerName, innerMt := range mtut {
+	for outerName, outerMt := range mediaTypes {
+		for innerName, innerMt := range mediaTypes {
 			tests = append(tests,
 				test{
 					fmt.Sprintf("%s vs %s", outerName, innerName),
