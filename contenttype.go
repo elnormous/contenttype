@@ -277,7 +277,7 @@ func NewMediaType(s string) MediaType {
 }
 
 // Converts the MediaType to string.
-func (mediaType *MediaType) String() string {
+func (mediaType MediaType) String() string {
 	var stringBuilder strings.Builder
 
 	if len(mediaType.Type) > 0 || len(mediaType.Subtype) > 0 {
