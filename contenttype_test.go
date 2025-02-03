@@ -123,7 +123,7 @@ func TestString(t *testing.T) {
 	}
 }
 
-func TestMediaType_MIME(t *testing.T) {
+func TestMediaTypeMIME(t *testing.T) {
 	testCases := []struct {
 		name   string
 		value  contenttype.MediaType
@@ -144,7 +144,7 @@ func TestMediaType_MIME(t *testing.T) {
 	}
 }
 
-func TestMediaType_IsWildcard(t *testing.T) {
+func TestMediaTypeIsWildcard(t *testing.T) {
 	testCases := []struct {
 		name   string
 		value  contenttype.MediaType
