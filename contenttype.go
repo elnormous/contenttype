@@ -1,4 +1,4 @@
-// Package contenttype implements HTTP Content-Type and Accept header parsers.
+// Package contenttype implements HTTP Content-Type, Accept and Accept-Language header parsers.
 package contenttype
 
 import (
@@ -23,6 +23,8 @@ var (
 	ErrNoAvailableTypeGiven = errors.New("no available type given")
 	// ErrInvalidWeight is returned when the media type weight in Accept header is syntactically invalid.
 	ErrInvalidWeight = errors.New("invalid weight")
+	// ErrInvalidLanguage is returned when the language is syntactically invalid.
+	ErrInvalidLanguage = errors.New("invalid language")
 )
 
 // Parameters represents media type parameters as a key-value map.
@@ -33,237 +35,6 @@ type MediaType struct {
 	Type       string
 	Subtype    string
 	Parameters Parameters
-}
-
-func isWhitespaceChar(c byte) bool {
-	// RFC 7230, 3.2.3. Whitespace
-	return c == 0x09 || c == 0x20 // HTAB or SP
-}
-
-func isDigitChar(c byte) bool {
-	// RFC 5234, Appendix B.1. Core Rules
-	return c >= 0x30 && c <= 0x39
-}
-
-func isAlphaChar(c byte) bool {
-	// RFC 5234, Appendix B.1. Core Rules
-	return (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A)
-}
-
-func isTokenChar(c byte) bool {
-	// RFC 7230, 3.2.6. Field Value Components
-	return c == '!' || c == '#' || c == '$' || c == '%' || c == '&' || c == '\'' || c == '*' ||
-		c == '+' || c == '-' || c == '.' || c == '^' || c == '_' || c == '`' || c == '|' || c == '~' ||
-		isDigitChar(c) ||
-		isAlphaChar(c)
-}
-
-func isVisibleChar(c byte) bool {
-	// RFC 5234, Appendix B.1. Core Rules
-	return c >= 0x21 && c <= 0x7E
-}
-
-func isObsoleteTextChar(c byte) bool {
-	// RFC 7230, 3.2.6. Field Value Components
-	return c >= 0x80 && c <= 0xFF
-}
-
-func isQuotedTextChar(c byte) bool {
-	// RFC 7230, 3.2.6. Field Value Components
-	return isWhitespaceChar(c) ||
-		c == 0x21 ||
-		(c >= 0x23 && c <= 0x5B) ||
-		(c >= 0x5D && c <= 0x7E) ||
-		isObsoleteTextChar(c)
-}
-
-func isQuotedPairChar(c byte) bool {
-	// RFC 7230, 3.2.6. Field Value Components
-	return isWhitespaceChar(c) ||
-		isVisibleChar(c) ||
-		isObsoleteTextChar(c)
-}
-
-func skipWhitespaces(s string) string {
-	// RFC 7230, 3.2.3. Whitespace
-	for i := 0; i < len(s); i++ {
-		if !isWhitespaceChar(s[i]) {
-			return s[i:]
-		}
-	}
-
-	return ""
-}
-
-func skipCharacter(s string, c byte) (remaining string, consumed bool) {
-	if len(s) == 0 || s[0] != c {
-		return s, false
-	}
-
-	return s[1:], true
-}
-
-func consumeToken(s string) (token, remaining string, consumed bool) {
-	// RFC 7230, 3.2.6. Field Value Components
-	for i := 0; i < len(s); i++ {
-		if !isTokenChar(s[i]) {
-			return strings.ToLower(s[:i]), s[i:], i > 0
-		}
-	}
-
-	return strings.ToLower(s), "", len(s) > 0
-}
-
-func consumeQuotedString(s string) (token, remaining string, consumed bool) {
-	// RFC 7230, 3.2.6. Field Value Components
-	var stringBuilder strings.Builder
-
-	index := 0
-	for ; index < len(s); index++ {
-		if s[index] == '\\' {
-			index++
-			if len(s) <= index || !isQuotedPairChar(s[index]) {
-				return "", s, false
-			}
-			stringBuilder.WriteByte(s[index])
-		} else if isQuotedTextChar(s[index]) {
-			stringBuilder.WriteByte(s[index])
-		} else {
-			break
-		}
-	}
-
-	return strings.ToLower(stringBuilder.String()), s[index:], true
-}
-
-func consumeType(s string) (string, string, string, bool) {
-	// RFC 7231, 3.1.1.1. Media Type
-	var t, st string
-	var consumed bool
-	t, s, consumed = consumeToken(s)
-	if !consumed {
-		return "", "", s, false
-	}
-
-	var skipped bool
-	s, skipped = skipCharacter(s, '/')
-	if !skipped {
-		return "", "", s, false
-	}
-
-	st, s, consumed = consumeToken(s)
-	if !consumed {
-		return "", "", s, false
-	}
-
-	if t == "*" && st != "*" {
-		return "", "", s, false
-	}
-
-	return t, st, skipWhitespaces(s), true
-}
-
-func consumeParameter(s string) (string, string, string, bool) {
-	// RFC 7231, 3.1.1.1. Media Type
-	var consumed bool
-	var key string
-	if key, s, consumed = consumeToken(skipWhitespaces(s)); !consumed {
-		return "", "", s, false
-	}
-
-	var skipped bool
-	s, skipped = skipCharacter(s, '=')
-	if !skipped {
-		return "", "", s, false
-	}
-
-	var value string
-	if s, skipped = skipCharacter(s, '"'); skipped {
-		if value, s, consumed = consumeQuotedString(s); !consumed {
-			return "", "", s, false
-		}
-
-		if s, skipped = skipCharacter(s, '"'); !skipped { // skip the closing quote
-			return "", "", s, false
-		}
-	} else {
-		if value, s, consumed = consumeToken(s); !consumed {
-			return "", "", s, false
-		}
-	}
-
-	return key, value, skipWhitespaces(s), true
-}
-
-func getWeight(s string) (uint, bool) {
-	// RFC 7231, 5.3.1. Quality Values
-	result := uint(0)
-	multiplier := uint(1000)
-
-	// the string must not have more than three digits after the decimal point
-	if len(s) > 5 {
-		return 0, false
-	}
-
-	for i := 0; i < len(s); i++ {
-		if i == 0 {
-			// the first character must be 0 or 1
-			if s[i] != '0' && s[i] != '1' {
-				return 0, false
-			}
-
-			result = uint(s[i]-'0') * multiplier
-			multiplier /= 10
-		} else if i == 1 {
-			// the second character must be a dot
-			if s[i] != '.' {
-				return 0, false
-			}
-		} else {
-			// the remaining characters must be digits and the value can not be greater than 1.000
-			if (s[0] == '1' && s[i] != '0') ||
-				!isDigitChar(s[i]) {
-				return 0, false
-			}
-
-			result += uint(s[i]-'0') * multiplier
-			multiplier /= 10
-		}
-	}
-
-	return result, true
-}
-
-func compareMediaTypes(checkMediaType, mediaType MediaType) bool {
-	// RFC 7231, 5.3.2. Accept
-	if (checkMediaType.Type == "*" || checkMediaType.Type == mediaType.Type) &&
-		(checkMediaType.Subtype == "*" || checkMediaType.Subtype == mediaType.Subtype) {
-
-		for checkKey, checkValue := range checkMediaType.Parameters {
-			if value, found := mediaType.Parameters[checkKey]; !found || value != checkValue {
-				return false
-			}
-		}
-
-		return true
-	}
-
-	return false
-}
-
-func getPrecedence(checkMediaType, mediaType MediaType) bool {
-	// RFC 7231, 5.3.2. Accept
-	if len(mediaType.Type) == 0 || len(mediaType.Subtype) == 0 { // not set
-		return true
-	}
-
-	if (mediaType.Type == "*" && checkMediaType.Type != "*") ||
-		(mediaType.Subtype == "*" && checkMediaType.Subtype != "*") ||
-		(len(mediaType.Parameters) < len(checkMediaType.Parameters)) {
-		return true
-	}
-
-	return false
 }
 
 // NewMediaType parses the string and returns an instance of MediaType struct.
@@ -504,4 +275,307 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 	}
 
 	return availableMediaTypes[resultIndex], weights[resultIndex].extensionParameters, nil
+}
+
+func isWhitespaceChar(c byte) bool {
+	// RFC 7230, 3.2.3. Whitespace
+	return c == 0x09 || c == 0x20 // HTAB or SP
+}
+
+func isDigitChar(c byte) bool {
+	// RFC 5234, Appendix B.1. Core Rules
+	return c >= 0x30 && c <= 0x39
+}
+
+func isAlphaChar(c byte) bool {
+	// RFC 5234, Appendix B.1. Core Rules
+	return (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A)
+}
+
+func isTokenChar(c byte) bool {
+	// RFC 7230, 3.2.6. Field Value Components
+	return c == '!' || c == '#' || c == '$' || c == '%' || c == '&' || c == '\'' || c == '*' ||
+		c == '+' || c == '-' || c == '.' || c == '^' || c == '_' || c == '`' || c == '|' || c == '~' ||
+		isDigitChar(c) ||
+		isAlphaChar(c)
+}
+
+func isVisibleChar(c byte) bool {
+	// RFC 5234, Appendix B.1. Core Rules
+	return c >= 0x21 && c <= 0x7E
+}
+
+func isObsoleteTextChar(c byte) bool {
+	// RFC 7230, 3.2.6. Field Value Components
+	return c >= 0x80 && c <= 0xFF
+}
+
+func isQuotedTextChar(c byte) bool {
+	// RFC 7230, 3.2.6. Field Value Components
+	return isWhitespaceChar(c) ||
+		c == 0x21 ||
+		(c >= 0x23 && c <= 0x5B) ||
+		(c >= 0x5D && c <= 0x7E) ||
+		isObsoleteTextChar(c)
+}
+
+func isQuotedPairChar(c byte) bool {
+	// RFC 7230, 3.2.6. Field Value Components
+	return isWhitespaceChar(c) ||
+		isVisibleChar(c) ||
+		isObsoleteTextChar(c)
+}
+
+func skipWhitespaces(s string) string {
+	// RFC 7230, 3.2.3. Whitespace
+	for i := 0; i < len(s); i++ {
+		if !isWhitespaceChar(s[i]) {
+			return s[i:]
+		}
+	}
+
+	return ""
+}
+
+func skipCharacter(s string, c byte) (remaining string, consumed bool) {
+	if len(s) == 0 || s[0] != c {
+		return s, false
+	}
+
+	return s[1:], true
+}
+
+func consumeToken(s string) (token, remaining string, consumed bool) {
+	// RFC 7230, 3.2.6. Field Value Components
+	for i := 0; i < len(s); i++ {
+		if !isTokenChar(s[i]) {
+			return strings.ToLower(s[:i]), s[i:], i > 0
+		}
+	}
+
+	return strings.ToLower(s), "", len(s) > 0
+}
+
+func consumeQuotedString(s string) (token, remaining string, consumed bool) {
+	// RFC 7230, 3.2.6. Field Value Components
+	var stringBuilder strings.Builder
+
+	index := 0
+	for ; index < len(s); index++ {
+		if s[index] == '\\' {
+			index++
+			if len(s) <= index || !isQuotedPairChar(s[index]) {
+				return "", s, false
+			}
+			stringBuilder.WriteByte(s[index])
+		} else if isQuotedTextChar(s[index]) {
+			stringBuilder.WriteByte(s[index])
+		} else {
+			break
+		}
+	}
+
+	return strings.ToLower(stringBuilder.String()), s[index:], true
+}
+
+func consumeType(s string) (string, string, string, bool) {
+	// RFC 7231, 3.1.1.1. Media Type
+	t, s, consumed := consumeToken(s)
+	if !consumed {
+		return "", "", s, false
+	}
+
+	s, skipped := skipCharacter(s, '/')
+	if !skipped {
+		return "", "", s, false
+	}
+
+	st, s, consumed := consumeToken(s)
+	if !consumed {
+		return "", "", s, false
+	}
+
+	if t == "*" && st != "*" {
+		return "", "", s, false
+	}
+
+	return t, st, skipWhitespaces(s), true
+}
+
+func consumeParameter(s string) (string, string, string, bool) {
+	// RFC 7231, 3.1.1.1. Media Type
+	var consumed bool
+	var key string
+	if key, s, consumed = consumeToken(skipWhitespaces(s)); !consumed {
+		return "", "", s, false
+	}
+
+	var skipped bool
+	s, skipped = skipCharacter(s, '=')
+	if !skipped {
+		return "", "", s, false
+	}
+
+	var value string
+	if s, skipped = skipCharacter(s, '"'); skipped {
+		if value, s, consumed = consumeQuotedString(s); !consumed {
+			return "", "", s, false
+		}
+
+		if s, skipped = skipCharacter(s, '"'); !skipped { // skip the closing quote
+			return "", "", s, false
+		}
+	} else {
+		if value, s, consumed = consumeToken(s); !consumed {
+			return "", "", s, false
+		}
+	}
+
+	return key, value, skipWhitespaces(s), true
+}
+
+func getWeight(s string) (uint, bool) {
+	// RFC 7231, 5.3.1. Quality Values
+	result := uint(0)
+	multiplier := uint(1000)
+
+	// the string must not have more than three digits after the decimal point
+	if len(s) > 5 {
+		return 0, false
+	}
+
+	for i := 0; i < len(s); i++ {
+		if i == 0 {
+			// the first character must be 0 or 1
+			if s[i] != '0' && s[i] != '1' {
+				return 0, false
+			}
+
+			result = uint(s[i]-'0') * multiplier
+			multiplier /= 10
+		} else if i == 1 {
+			// the second character must be a dot
+			if s[i] != '.' {
+				return 0, false
+			}
+		} else {
+			// the remaining characters must be digits and the value can not be greater than 1.000
+			if (s[0] == '1' && s[i] != '0') ||
+				!isDigitChar(s[i]) {
+				return 0, false
+			}
+
+			result += uint(s[i]-'0') * multiplier
+			multiplier /= 10
+		}
+	}
+
+	return result, true
+}
+
+func compareMediaTypes(checkMediaType, mediaType MediaType) bool {
+	// RFC 7231, 5.3.2. Accept
+	if (checkMediaType.Type == "*" || checkMediaType.Type == mediaType.Type) &&
+		(checkMediaType.Subtype == "*" || checkMediaType.Subtype == mediaType.Subtype) {
+
+		for checkKey, checkValue := range checkMediaType.Parameters {
+			if value, found := mediaType.Parameters[checkKey]; !found || value != checkValue {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	return false
+}
+
+func getPrecedence(checkMediaType, mediaType MediaType) bool {
+	// RFC 7231, 5.3.2. Accept
+	if len(mediaType.Type) == 0 || len(mediaType.Subtype) == 0 { // not set
+		return true
+	}
+
+	if (mediaType.Type == "*" && checkMediaType.Type != "*") ||
+		(mediaType.Subtype == "*" && checkMediaType.Subtype != "*") ||
+		(len(mediaType.Parameters) < len(checkMediaType.Parameters)) {
+		return true
+	}
+
+	return false
+}
+
+type Language struct {
+	Language string
+	Script   string
+	Region   string
+}
+
+// NewLanguage parses the string and returns an instance of Language struct.
+func NewLanguage(s string) Language {
+	language, err := ParseLanguage(s)
+	if err != nil {
+		return Language{}
+	}
+
+	return language
+}
+
+// ParseLanguage parses the given string as a language and returns it as a Language.
+// If the string cannot be parsed an appropriate error is returned.
+func ParseLanguage(s string) (Language, error) {
+	// RFC 4647, 2.1 Basic Language Range
+	language := Language{}
+	var consumed bool
+	if language.Language, language.Script, language.Region, s, consumed = consumeLanguageTags(skipWhitespaces(s)); !consumed {
+		return Language{}, ErrInvalidLanguage
+	}
+
+	// there must not be anything left after parsing the header
+	if len(s) > 0 {
+		return Language{}, ErrInvalidMediaType
+	}
+
+	return language, nil
+}
+
+func consumeTag(s string) (string, string, bool) {
+	// RFC 4647, 2.1. Basic Language Range
+	for i := 0; i < len(s) && i < 8; i++ {
+		if !isAlphaChar(s[i]) {
+			return strings.ToLower(s[:i]), s[i:], len(s) > 0
+		}
+	}
+
+	return strings.ToLower(s), "", len(s) > 0
+}
+
+func consumeLanguageTags(s string) (string, string, string, string, bool) {
+	primaryTag, s, consumed := consumeTag(s)
+
+	if !consumed {
+		return "", "", "", "", false
+	}
+
+	if len(s) == 0 {
+		return primaryTag, "", "", "", true
+	}
+
+	if s[0] != '-' {
+		return "", "", "", "", false
+	}
+
+	tag1, s, consumed := consumeTag(s[1:])
+
+	if len(s) == 0 {
+		return primaryTag, "", tag1, "", true
+	}
+
+	if s[0] != '-' {
+		return "", "", "", "", false
+	}
+
+	tag2, s, consumed := consumeTag(s[1:])
+
+	return primaryTag, tag1, tag2, s, true
 }

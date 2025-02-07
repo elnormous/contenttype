@@ -42,7 +42,7 @@ func TestNewMediaType(t *testing.T) {
 			result := contenttype.NewMediaType(testCase.value)
 
 			if result.Type != testCase.result.Type || result.Subtype != testCase.result.Subtype {
-				t.Fatalf("Invalid content type, got %s/%s, exptected %s/%s for %s", result.Type, result.Subtype, testCase.result.Type, testCase.result.Subtype, testCase.value)
+				t.Fatalf("Invalid content type, got %s, exptected %s for %s", result, testCase.result, testCase.value)
 			} else if !reflect.DeepEqual(result.Parameters, testCase.result.Parameters) {
 				t.Fatalf("Wrong parameters, got %v, expected %v for %s", result.Parameters, testCase.result.Parameters, testCase.value)
 			}
@@ -101,7 +101,7 @@ func TestParseMediaTypeErrors(t *testing.T) {
 	}
 }
 
-func TestString(t *testing.T) {
+func TestMediaTypeString(t *testing.T) {
 	testCases := []struct {
 		name   string
 		value  contenttype.MediaType
@@ -541,6 +541,30 @@ func TestMediaTypeMatchesAny(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.a.MatchesAny(tt.bs...); got != tt.want {
 				t.Errorf("MediaType.MatchesAny() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewLanguage(t *testing.T) {
+	testCases := []struct {
+		name   string
+		value  string
+		result contenttype.Language
+	}{
+		{name: "Empty string", value: "", result: contenttype.Language{}},
+		{name: "Language and region", value: "lv-LV", result: contenttype.Language{Language: "lv", Script: "", Region: "lv"}},
+		{name: "Language, script, and region", value: "en-latin-US", result: contenttype.Language{Language: "en", Script: "latin", Region: "us"}},
+		{name: "Language only", value: "lt", result: contenttype.Language{Language: "lt", Script: "", Region: ""}},
+		{name: "Language and lowercase region", value: "lv-lv", result: contenttype.Language{Language: "lv", Script: "", Region: "lv"}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result := contenttype.NewLanguage(testCase.value)
+
+			if result.Language != testCase.result.Language || result.Script != testCase.result.Script || result.Region != testCase.result.Region {
+				t.Fatalf("Invalid language, got %s, exptected %s for %s", result, testCase.result, testCase.value)
 			}
 		})
 	}
