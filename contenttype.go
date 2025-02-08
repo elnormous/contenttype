@@ -307,7 +307,7 @@ func isVisibleChar(c byte) bool {
 
 func isObsoleteTextChar(c byte) bool {
 	// RFC 7230, 3.2.6. Field Value Components
-	return c >= 0x80 && c <= 0xFF
+	return c >= 0x80 // c is always less than or equal to 0xFF
 }
 
 func isQuotedTextChar(c byte) bool {
