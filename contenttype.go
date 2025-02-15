@@ -378,7 +378,7 @@ func consumeQuotedString(s string) (token, remaining string, consumed bool) {
 	return strings.ToLower(stringBuilder.String()), s[index:], true
 }
 
-func consumeType(s string) (string, string, string, bool) {
+func consumeType(s string) (tag, subtag, remaining string, consumed bool) {
 	// RFC 7231, 3.1.1.1. Media Type
 	t, s, consumed := consumeToken(s)
 	if !consumed {
@@ -402,10 +402,8 @@ func consumeType(s string) (string, string, string, bool) {
 	return t, st, skipWhitespaces(s), true
 }
 
-func consumeParameter(s string) (string, string, string, bool) {
+func consumeParameter(s string) (key, value, remaining string, consumed bool) {
 	// RFC 7231, 3.1.1.1. Media Type
-	var consumed bool
-	var key string
 	if key, s, consumed = consumeToken(skipWhitespaces(s)); !consumed {
 		return "", "", s, false
 	}
@@ -416,7 +414,6 @@ func consumeParameter(s string) (string, string, string, bool) {
 		return "", "", s, false
 	}
 
-	var value string
 	if s, skipped = skipCharacter(s, '"'); skipped {
 		if value, s, consumed = consumeQuotedString(s); !consumed {
 			return "", "", s, false
@@ -434,7 +431,7 @@ func consumeParameter(s string) (string, string, string, bool) {
 	return key, value, skipWhitespaces(s), true
 }
 
-func getWeight(s string) (uint, bool) {
+func getWeight(s string) (weight uint, consumed bool) {
 	// RFC 7231, 5.3.1. Quality Values
 	result := uint(0)
 	multiplier := uint(1000)
@@ -539,7 +536,7 @@ func ParseLanguage(s string) (Language, error) {
 	return language, nil
 }
 
-func consumeLanguage(s string) (string, string, bool) {
+func consumeLanguage(s string) (language, remaining string, consumed bool) {
 	// RFC 5646, 2.1. Syntax
 	for i := 0; i < len(s) && i < 8; i++ {
 		if !isAlphaChar(s[i]) {
@@ -558,7 +555,7 @@ func consumeLanguage(s string) (string, string, bool) {
 	}
 }
 
-func consumeScript(s string) (string, string, bool) {
+func consumeScript(s string) (script, remaining string, consumed bool) {
 	// RFC 5646, 2.1. Syntax
 	for i := 0; i < len(s) && i < 4; i++ {
 		if !isAlphaChar(s[i]) {
@@ -577,7 +574,7 @@ func consumeScript(s string) (string, string, bool) {
 	}
 }
 
-func consumeRegion(s string) (string, string, bool) {
+func consumeRegion(s string) (region, remaining string, consumed bool) {
 	// RFC 5646, 2.1. Syntax
 	for i := 0; i < len(s) && i < 3; i++ {
 		if !isAlphaChar(s[i]) {
@@ -588,8 +585,8 @@ func consumeRegion(s string) (string, string, bool) {
 	return strings.ToLower(s), "", len(s) > 0
 }
 
-func consumeLanguageTags(s string) (string, string, string, string, bool) {
-	language, s, consumed := consumeLanguage(s)
+func consumeLanguageTags(s string) (language, script, region, remaining string, consumed bool) {
+	language, s, consumed = consumeLanguage(s)
 
 	if !consumed {
 		return "", "", "", "", false
