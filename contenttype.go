@@ -159,7 +159,7 @@ func ParseMediaType(s string) (MediaType, error) {
 	return mediaType, nil
 }
 
-// GetAcceptableMediaType chooses a media type from available media types according to the Accept.
+// GetAcceptableMediaType chooses a media type from available media types according to the Accept header.
 // Returns the most suitable media type or an error if no type can be selected.
 func GetAcceptableMediaType(request *http.Request, availableMediaTypes []MediaType) (MediaType, Parameters, error) {
 	// RFC 7231, 5.3.2. Accept
@@ -539,9 +539,47 @@ func ParseLanguage(s string) (Language, error) {
 	return language, nil
 }
 
-func consumeTag(s string) (string, string, bool) {
-	// RFC 4647, 2.1. Basic Language Range
+func consumeLanguage(s string) (string, string, bool) {
+	// RFC 5646, 2.1. Syntax
 	for i := 0; i < len(s) && i < 8; i++ {
+		if !isAlphaChar(s[i]) {
+			if len(s) >= 2 {
+				return strings.ToLower(s[:i]), s[i:], true
+			} else {
+				return "", s, false
+			}
+		}
+	}
+
+	if len(s) >= 2 {
+		return strings.ToLower(s), "", len(s) >= 2
+	} else {
+		return "", s, false
+	}
+}
+
+func consumeScript(s string) (string, string, bool) {
+	// RFC 5646, 2.1. Syntax
+	for i := 0; i < len(s) && i < 4; i++ {
+		if !isAlphaChar(s[i]) {
+			if len(s) >= 2 {
+				return strings.ToLower(s[:i]), s[i:], true
+			} else {
+				return "", s, false
+			}
+		}
+	}
+
+	if len(s) >= 2 {
+		return strings.ToLower(s), "", true
+	} else {
+		return "", s, false
+	}
+}
+
+func consumeRegion(s string) (string, string, bool) {
+	// RFC 5646, 2.1. Syntax
+	for i := 0; i < len(s) && i < 3; i++ {
 		if !isAlphaChar(s[i]) {
 			return strings.ToLower(s[:i]), s[i:], len(s) > 0
 		}
@@ -551,24 +589,24 @@ func consumeTag(s string) (string, string, bool) {
 }
 
 func consumeLanguageTags(s string) (string, string, string, string, bool) {
-	primaryTag, s, consumed := consumeTag(s)
+	language, s, consumed := consumeLanguage(s)
 
 	if !consumed {
 		return "", "", "", "", false
 	}
 
 	if len(s) == 0 {
-		return primaryTag, "", "", "", true
+		return language, "", "", "", true
 	}
 
 	if s[0] != '-' {
 		return "", "", "", "", false
 	}
 
-	tag1, s, consumed := consumeTag(s[1:])
+	/*tag1, s, consumed := consumeTag(s[1:])
 
 	if len(s) == 0 {
-		return primaryTag, "", tag1, "", true
+		return language, "", tag1, "", true
 	}
 
 	if s[0] != '-' {
@@ -577,5 +615,7 @@ func consumeLanguageTags(s string) (string, string, string, string, bool) {
 
 	tag2, s, consumed := consumeTag(s[1:])
 
-	return primaryTag, tag1, tag2, s, true
+	return language, tag1, tag2, s, true*/
+
+	return "", "", "", "", false
 }
