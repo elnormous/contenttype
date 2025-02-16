@@ -121,12 +121,12 @@ func ParseMediaType(s string) (MediaType, error) {
 	for len(s) > 0 && s[0] == ';' {
 		s = s[1:] // skip the semicolon
 
-		key, value, remaining, consumed := consumeParameter(s)
+		var key, value string
+		key, value, s, consumed = consumeParameter(s)
 		if !consumed {
 			return MediaType{}, ErrInvalidParameter
 		}
 
-		s = remaining
 
 		mediaType.Parameters[key] = value
 	}
