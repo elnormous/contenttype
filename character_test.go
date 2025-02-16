@@ -100,3 +100,32 @@ func TestVisibleChar(t *testing.T) {
 		})
 	}
 }
+
+func TestSkipChar(t *testing.T) {
+	testCases := []struct {
+		name      string
+		value     string
+		skip      byte
+		remaining string
+		result    bool
+	}{
+		{name: "Empty string", value: "", skip: ' ', remaining: "", result: false},
+		{name: "Skip one letter", value: "A", skip: 'A', remaining: "", result: true},
+		{name: "Skip a different letter", value: "A", skip: 'B', remaining: "A", result: false},
+		{name: "Skip string with same letters", value: "AA", skip: 'A', remaining: "A", result: true},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			remaining, skipped := skipCharacter(testCase.value, testCase.skip)
+
+			if remaining != testCase.remaining {
+				t.Fatalf("Invalid remaining, got %s, exptected %s for %s", remaining, testCase.remaining, testCase.value)
+			}
+
+			if skipped != testCase.result {
+				t.Fatalf("Invalid result, got %v, exptected %v for %s", skipped, testCase.result, testCase.value)
+			}
+		})
+	}
+}
