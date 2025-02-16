@@ -118,8 +118,14 @@ func ParseMediaType(s string) (MediaType, error) {
 		return MediaType{}, ErrInvalidMediaType
 	}
 
-	for len(s) > 0 && s[0] == ';' {
-		s = s[1:] // skip the semicolon
+	for len(s) > 0 {
+		var skipped bool
+		s, skipped = skipCharacter(s, ';')
+
+		// there must not be anything left after parsing the header
+		if !skipped && len(s) > 0 {
+			return MediaType{}, ErrInvalidMediaType
+		}
 
 		var key, value string
 		key, value, s, consumed = consumeParameter(s)
@@ -128,11 +134,6 @@ func ParseMediaType(s string) (MediaType, error) {
 		}
 
 		mediaType.Parameters[key] = value
-	}
-
-	// there must not be anything left after parsing the header
-	if len(s) > 0 {
-		return MediaType{}, ErrInvalidMediaType
 	}
 
 	return mediaType, nil
@@ -187,8 +188,13 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 		weight := uint(1000) // 1.000
 
 		// media type parameters
-		for len(s) > 0 && s[0] == ';' {
-			s = s[1:] // skip the semicolon
+		for len(s) > 0 {
+			var skipped bool
+			s, skipped = skipCharacter(s, ';')
+
+			if !skipped {
+				break
+			}
 
 			var key, value string
 			if key, value, s, consumed = consumeParameter(s); !consumed {
@@ -206,8 +212,13 @@ func GetAcceptableMediaTypeFromHeader(headerValue string, availableMediaTypes []
 		}
 
 		extensionParameters := Parameters{}
-		for len(s) > 0 && s[0] == ';' {
-			s = s[1:] // skip the semicolon
+		for len(s) > 0 {
+			var skipped bool
+			s, skipped = skipCharacter(s, ';')
+
+			if !skipped {
+				break
+			}
 
 			var key, value, remaining string
 			if key, value, remaining, consumed = consumeParameter(s); !consumed {
