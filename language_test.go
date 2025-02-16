@@ -19,6 +19,8 @@ func TestNewLanguage(t *testing.T) {
 		{name: "Language and lowercase region", value: "lv-lv", result: contenttype.Language{Language: "lv", Script: "", Region: "lv"}},
 		{name: "Language and region number", value: "lv-428", result: contenttype.Language{Language: "lv", Script: "", Region: "428"}},
 		{name: "Three letter language", value: "lav", result: contenttype.Language{Language: "lav", Script: "", Region: ""}},
+		{name: "Language and character variant", value: "sl-rozaj", result: contenttype.Language{Language: "sl", Script: "", Region: "", Variant: "rozaj"}},
+		{name: "Language, region, and digit variant", value: "de-CH-1901", result: contenttype.Language{Language: "de", Script: "", Region: "ch", Variant: "1901"}},
 	}
 
 	for _, testCase := range testCases {

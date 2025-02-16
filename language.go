@@ -1435,6 +1435,7 @@ type Language struct {
 	Language string
 	Script   string
 	Region   string
+	Variant  string
 }
 
 // NewLanguage parses the string and returns an instance of Language struct.
@@ -1453,7 +1454,7 @@ func ParseLanguage(s string) (Language, error) {
 	// RFC 4647, 2.1 Basic Language Range
 	language := Language{}
 	var consumed bool
-	if language.Language, language.Script, language.Region, s, consumed = consumeLanguageTags(skipWhitespaces(s)); !consumed {
+	if language.Language, language.Script, language.Region, language.Variant, s, consumed = consumeLanguageTags(skipWhitespaces(s)); !consumed {
 		return Language{}, ErrInvalidLanguage
 	}
 
@@ -1508,8 +1509,12 @@ func isValidLanguage(language string) bool {
 }
 
 func isValidScript(script string) bool {
-	_, ok := scripts[script]
-	return ok
+	if len(script) == 4 {
+		_, ok := scripts[script]
+		return ok
+	}
+
+	return false
 }
 
 func isValidCountry(country string) bool {
@@ -1524,74 +1529,73 @@ func isValidCountry(country string) bool {
 	return false
 }
 
-func consumeLanguageTags(s string) (language, script, region, remaining string, consumed bool) {
+func isValidVariant(variant string) bool {
+	// RFC 5646, 2.1. Syntax
+	if len(variant) >= 5 && len(variant) <= 8 {
+		for i := 0; i < len(variant); i++ {
+			if !isAlphaChar(variant[i]) && !isDigitChar(variant[i]) {
+				return false
+			}
+		}
+		return true
+	} else if len(variant) == 4 {
+		if !isDigitChar(variant[0]) {
+			return false
+		}
+		for i := 1; i < len(variant); i++ {
+			if !isAlphaChar(variant[i]) && !isDigitChar(variant[i]) {
+				return false
+			}
+		}
+		return true
+	}
+
+	return false
+}
+
+func consumeLanguageTags(s string) (language, script, region, variant, remaining string, consumed bool) {
+	// RFC 5646, 2.1. Syntax
 	language, remaining, consumed = consumeLanguageTag(s)
 
 	if !consumed {
-		return "", "", "", s, false
+		return "", "", "", "", s, false
 	}
 
 	if !isValidLanguage(language) {
-		return "", "", "", s, false
+		return "", "", "", "", s, false
 	}
 
-	if len(remaining) == 0 {
-		return language, "", "", remaining, true
-	}
-
-	if remaining[0] != '-' {
-		return "", "", "", s, false
-	}
-
-	remaining = remaining[1:]
-
-	tag1, remaining, consumed := consumeTag(remaining)
-
-	if !consumed {
-		return "", "", "", s, false
-	}
-
-	if len(tag1) == 4 {
-		if !isValidScript(tag1) {
-			return "", "", "", s, false
-		} else {
-			script = tag1
-		}
-	} else if len(tag1) == 3 || len(tag1) == 2 {
-		if !isValidCountry(tag1) {
-			return "", "", "", s, false
-		} else {
-			region = tag1
-		}
-	} else {
-		return "", "", "", s, false
-	}
-
-	if len(remaining) == 0 {
-		return language, script, region, remaining, true
-	}
-
-	if remaining[0] != '-' {
-		return "", "", "", s, false
-	}
-
-	remaining = remaining[1:]
-
-	if len(region) == 0 {
-		region, remaining, consumed = consumeTag(remaining)
-
-		if len(region) == 3 || len(region) == 2 {
-			if !isValidCountry(region) {
-				return "", "", "", s, false
+	for i := 0; i < 4; {
+		var skipped bool
+		remaining, skipped = skipCharacter(remaining, '-')
+		if !skipped {
+			if len(remaining) == 0 {
+				return language, script, region, variant, remaining, true
+			} else {
+				return "", "", "", "", s, false
 			}
+		}
+
+		var tag string
+		tag, remaining, consumed = consumeTag(remaining)
+
+		if !consumed {
+			return "", "", "", "", s, false
+		}
+
+		if i == 0 && isValidScript(tag) {
+			script = tag
+			i = 1
+		} else if i <= 1 && isValidCountry(tag) {
+			region = tag
+			i = 2
+		} else if i <= 2 && isValidVariant(tag) {
+			variant = tag
+			i = 3
 		} else {
-			return "", "", "", s, false
+			return "", "", "", "", s, false
 		}
 	}
 
-	if len(remaining) == 0 {
-		return language, script, region, remaining, true
-	}
-
-	return language, script, region, remaining, true
+	return language, script, region, remaining, "", true
 }
