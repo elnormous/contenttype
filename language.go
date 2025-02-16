@@ -1525,30 +1525,30 @@ func isValidCountry(country string) bool {
 }
 
 func consumeLanguageTags(s string) (language, script, region, remaining string, consumed bool) {
-	language, s, consumed = consumeLanguageTag(s)
+	language, remaining, consumed = consumeLanguageTag(s)
 
 	if !consumed {
-		return "", "", "", "", false
+		return "", "", "", s, false
 	}
 
 	if !isValidLanguage(language) {
 		return "", "", "", s, false
 	}
 
-	if len(s) == 0 {
-		return language, "", "", "", true
+	if len(remaining) == 0 {
+		return language, "", "", remaining, true
 	}
 
-	if s[0] != '-' {
-		return "", "", "", "", false
+	if remaining[0] != '-' {
+		return "", "", "", s, false
 	}
 
-	s = s[1:]
+	remaining = remaining[1:]
 
-	tag1, s, consumed := consumeTag(s)
+	tag1, remaining, consumed := consumeTag(remaining)
 
 	if !consumed {
-		return "", "", "", "", false
+		return "", "", "", s, false
 	}
 
 	if len(tag1) == 4 {
@@ -1567,18 +1567,18 @@ func consumeLanguageTags(s string) (language, script, region, remaining string, 
 		return "", "", "", s, false
 	}
 
-	if len(s) == 0 {
-		return language, script, region, s, true
+	if len(remaining) == 0 {
+		return language, script, region, remaining, true
 	}
 
-	if s[0] != '-' {
-		return "", "", "", "", false
+	if remaining[0] != '-' {
+		return "", "", "", s, false
 	}
 
-	s = s[1:]
+	remaining = remaining[1:]
 
 	if len(region) == 0 {
-		region, s, consumed = consumeTag(s)
+		region, remaining, consumed = consumeTag(remaining)
 
 		if len(region) == 3 || len(region) == 2 {
 			if !isValidCountry(region) {
@@ -1589,9 +1589,9 @@ func consumeLanguageTags(s string) (language, script, region, remaining string, 
 		}
 	}
 
-	if len(s) == 0 {
-		return language, script, region, s, true
+	if len(remaining) == 0 {
+		return language, script, region, remaining, true
 	}
 
-	return language, script, region, s, true
+	return language, script, region, remaining, true
 }
