@@ -360,17 +360,17 @@ func consumeQuotedString(s string) (token, remaining string, consumed bool) {
 
 func consumeType(s string) (tag, subtag, remaining string, consumed bool) {
 	// RFC 7231, 3.1.1.1. Media Type
-	t, s, consumed := consumeToken(s)
+	t, remaining, consumed := consumeToken(s)
 	if !consumed {
 		return "", "", s, false
 	}
 
-	s, skipped := skipCharacter(s, '/')
+	remaining, skipped := skipCharacter(remaining, '/')
 	if !skipped {
 		return "", "", s, false
 	}
 
-	st, s, consumed := consumeToken(s)
+	st, remaining, consumed := consumeToken(remaining)
 	if !consumed {
 		return "", "", s, false
 	}
@@ -379,36 +379,36 @@ func consumeType(s string) (tag, subtag, remaining string, consumed bool) {
 		return "", "", s, false
 	}
 
-	return t, st, skipWhitespaces(s), true
+	return t, st, skipWhitespaces(remaining), true
 }
 
 func consumeParameter(s string) (key, value, remaining string, consumed bool) {
 	// RFC 7231, 3.1.1.1. Media Type
-	if key, s, consumed = consumeToken(skipWhitespaces(s)); !consumed {
+	if key, remaining, consumed = consumeToken(skipWhitespaces(s)); !consumed {
 		return "", "", s, false
 	}
 
 	var skipped bool
-	s, skipped = skipCharacter(s, '=')
+	remaining, skipped = skipCharacter(remaining, '=')
 	if !skipped {
 		return "", "", s, false
 	}
 
-	if s, skipped = skipCharacter(s, '"'); skipped {
-		if value, s, consumed = consumeQuotedString(s); !consumed {
+	if remaining, skipped = skipCharacter(remaining, '"'); skipped {
+		if value, remaining, consumed = consumeQuotedString(remaining); !consumed {
 			return "", "", s, false
 		}
 
-		if s, skipped = skipCharacter(s, '"'); !skipped { // skip the closing quote
+		if remaining, skipped = skipCharacter(remaining, '"'); !skipped { // skip the closing quote
 			return "", "", s, false
 		}
 	} else {
-		if value, s, consumed = consumeToken(s); !consumed {
+		if value, remaining, consumed = consumeToken(remaining); !consumed {
 			return "", "", s, false
 		}
 	}
 
-	return key, value, skipWhitespaces(s), true
+	return key, value, skipWhitespaces(remaining), true
 }
 
 func getWeight(s string) (weight uint, consumed bool) {
