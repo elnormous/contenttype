@@ -127,7 +127,6 @@ func ParseMediaType(s string) (MediaType, error) {
 			return MediaType{}, ErrInvalidParameter
 		}
 
-
 		mediaType.Parameters[key] = value
 	}
 
@@ -365,8 +364,7 @@ func consumeParameter(s string) (key, value, remaining string, consumed bool) {
 		return "", "", s, false
 	}
 
-	var skipped bool
-	remaining, skipped = skipCharacter(remaining, '=')
+	remaining, skipped := skipCharacter(remaining, '=')
 	if !skipped {
 		return "", "", s, false
 	}
