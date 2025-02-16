@@ -1480,6 +1480,35 @@ func consumeTag(s string) (language, remaining string, consumed bool) {
 	return strings.ToLower(s), "", len(s) >= 2
 }
 
+func isValidLanguage(language string) bool {
+	if len(language) == 2 {
+		_, ok := languageSet1[language]
+		return ok
+	} else if len(language) == 3 {
+		_, ok := languageSet2[language]
+		return ok
+	}
+
+	return false
+}
+
+func isValidScript(script string) bool {
+	_, ok := scripts[script]
+	return ok
+}
+
+func isValidCountry(country string) bool {
+	if len(country) == 2 {
+		_, ok := countryCodes[country]
+		return ok
+	} else if len(country) == 3 {
+		_, ok := countryNumbers[country]
+		return ok
+	}
+
+	return false
+}
+
 func consumeLanguageTags(s string) (language, script, region, remaining string, consumed bool) {
 	language, s, consumed = consumeTag(s)
 
@@ -1487,16 +1516,8 @@ func consumeLanguageTags(s string) (language, script, region, remaining string, 
 		return "", "", "", "", false
 	}
 
-	if len(language) < 2 {
+	if !isValidLanguage(language) {
 		return "", "", "", s, false
-	} else if len(language) == 2 {
-		if _, ok := languageSet1[language]; !ok {
-			return "", "", "", s, false
-		}
-	} else if len(language) == 3 {
-		if _, ok := languageSet2[language]; !ok {
-			return "", "", "", s, false
-		}
 	}
 
 	if len(s) == 0 {
@@ -1516,19 +1537,13 @@ func consumeLanguageTags(s string) (language, script, region, remaining string, 
 	}
 
 	if len(tag1) == 4 {
-		if _, ok := scripts[tag1]; !ok {
+		if !isValidScript(tag1) {
 			return "", "", "", s, false
 		} else {
 			script = tag1
 		}
-	} else if len(tag1) == 3 {
-		if _, ok := countryNumbers[tag1]; !ok {
-			return "", "", "", s, false
-		} else {
-			region = tag1
-		}
-	} else if len(tag1) == 2 {
-		if _, ok := countryCodes[tag1]; !ok {
+	} else if len(tag1) == 3 || len(tag1) == 2 {
+		if !isValidCountry(tag1) {
 			return "", "", "", s, false
 		} else {
 			region = tag1
@@ -1550,12 +1565,8 @@ func consumeLanguageTags(s string) (language, script, region, remaining string, 
 	if len(region) == 0 {
 		region, s, consumed = consumeTag(s)
 
-		if len(region) == 3 {
-			if _, ok := countryNumbers[region]; !ok {
-				return "", "", "", s, false
-			}
-		} else if len(region) == 2 {
-			if _, ok := countryCodes[region]; !ok {
+		if len(region) == 3 || len(region) == 2 {
+			if !isValidCountry(region) {
 				return "", "", "", s, false
 			}
 		} else {
