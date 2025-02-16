@@ -2,7 +2,7 @@ package contenttype
 
 import "strings"
 
-// List of ISO 639 set 1 language code
+// List of ISO 639 set 1 language codes
 var languageSet1 = map[string]string{
 	"aa": "aar",
 	"ab": "abk",
@@ -190,7 +190,7 @@ var languageSet1 = map[string]string{
 	"zu": "zul",
 }
 
-// List of ISO 639 set 2 language code
+// List of ISO 639 set 2 language codes
 var languageSet2 = map[string]string{
 	"aar": "aar",
 	"abk": "abk",
@@ -699,6 +699,232 @@ var languageSet2 = map[string]string{
 	"zza": "zza",
 }
 
+// List of ISO 15924 scripts
+var scripts = map[string]int{
+	"adlm": 166,
+	"afak": 439,
+	"aghb": 239,
+	"ahom": 338,
+	"arab": 160,
+	"aran": 161,
+	"armi": 124,
+	"armn": 230,
+	"avst": 134,
+	"bali": 360,
+	"bamu": 435,
+	"bass": 259,
+	"batk": 365,
+	"beng": 325,
+	"berf": 258,
+	"bhks": 334,
+	"blis": 550,
+	"bopo": 285,
+	"brah": 300,
+	"brai": 570,
+	"bugi": 367,
+	"buhd": 372,
+	"cakm": 349,
+	"cans": 440,
+	"cari": 201,
+	"cham": 358,
+	"cher": 445,
+	"chis": 298,
+	"chrs": 109,
+	"cirt": 291,
+	"copt": 204,
+	"cpmn": 402,
+	"cprt": 403,
+	"cyrl": 220,
+	"cyrs": 221,
+	"deva": 315,
+	"diak": 342,
+	"dogr": 328,
+	"dsrt": 250,
+	"dupl": 755,
+	"egyd": 70,
+	"egyh": 60,
+	"egyp": 50,
+	"elba": 226,
+	"elym": 128,
+	"ethi": 430,
+	"gara": 164,
+	"geok": 241,
+	"geor": 240,
+	"glag": 225,
+	"gong": 312,
+	"gonm": 313,
+	"goth": 206,
+	"gran": 343,
+	"grek": 200,
+	"gujr": 320,
+	"gukh": 397,
+	"guru": 310,
+	"hanb": 503,
+	"hang": 286,
+	"hani": 500,
+	"hano": 371,
+	"hans": 501,
+	"hant": 502,
+	"hatr": 127,
+	"hebr": 125,
+	"hira": 410,
+	"hluw": 80,
+	"hmng": 450,
+	"hmnp": 451,
+	"hrkt": 412,
+	"hung": 176,
+	"inds": 610,
+	"ital": 210,
+	"jamo": 284,
+	"java": 361,
+	"jpan": 413,
+	"jurc": 510,
+	"kali": 357,
+	"kana": 411,
+	"kawi": 368,
+	"khar": 305,
+	"khmr": 355,
+	"khoj": 322,
+	"kitl": 505,
+	"kits": 288,
+	"knda": 345,
+	"kore": 287,
+	"kpel": 436,
+	"krai": 396,
+	"kthi": 317,
+	"lana": 351,
+	"laoo": 356,
+	"latf": 217,
+	"latg": 216,
+	"latn": 215,
+	"leke": 364,
+	"lepc": 335,
+	"limb": 336,
+	"lina": 400,
+	"linb": 401,
+	"lisu": 399,
+	"loma": 437,
+	"lyci": 202,
+	"lydi": 116,
+	"mahj": 314,
+	"maka": 366,
+	"mand": 140,
+	"mani": 139,
+	"marc": 332,
+	"maya": 90,
+	"medf": 265,
+	"mend": 438,
+	"merc": 101,
+	"mero": 100,
+	"mlym": 347,
+	"modi": 324,
+	"mong": 145,
+	"moon": 218,
+	"mroo": 264,
+	"mtei": 337,
+	"mult": 323,
+	"mymr": 350,
+	"nagm": 295,
+	"nand": 311,
+	"narb": 106,
+	"nbat": 159,
+	"newa": 333,
+	"nkdb": 85,
+	"nkgb": 420,
+	"nkoo": 165,
+	"nshu": 499,
+	"ogam": 212,
+	"olck": 261,
+	"onao": 296,
+	"orkh": 175,
+	"orya": 327,
+	"osge": 219,
+	"osma": 260,
+	"ougr": 143,
+	"palm": 126,
+	"pauc": 263,
+	"pcun": 15,
+	"pelm": 16,
+	"perm": 227,
+	"phag": 331,
+	"phli": 131,
+	"phlp": 132,
+	"phlv": 133,
+	"phnx": 115,
+	"piqd": 293,
+	"plrd": 282,
+	"prti": 130,
+	"psin": 103,
+	"ranj": 303,
+	"rjng": 363,
+	"rohg": 167,
+	"roro": 620,
+	"runr": 211,
+	"samr": 123,
+	"sara": 292,
+	"sarb": 105,
+	"saur": 344,
+	"sgnw": 95,
+	"shaw": 281,
+	"shrd": 319,
+	"shui": 530,
+	"sidd": 302,
+	"sidt": 180,
+	"sind": 318,
+	"sinh": 348,
+	"sogd": 141,
+	"sogo": 142,
+	"sora": 398,
+	"soyo": 329,
+	"sund": 362,
+	"sunu": 274,
+	"sylo": 316,
+	"syrc": 135,
+	"syre": 138,
+	"syrj": 137,
+	"syrn": 136,
+	"tagb": 373,
+	"takr": 321,
+	"tale": 353,
+	"talu": 354,
+	"taml": 346,
+	"tang": 520,
+	"tavt": 359,
+	"tayo": 380,
+	"telu": 340,
+	"teng": 290,
+	"tfng": 120,
+	"tglg": 370,
+	"thaa": 170,
+	"thai": 352,
+	"tibt": 330,
+	"tirh": 326,
+	"tnsa": 275,
+	"todr": 229,
+	"tols": 299,
+	"toto": 294,
+	"tutg": 341,
+	"ugar": 40,
+	"vaii": 470,
+	"visp": 280,
+	"vith": 228,
+	"wara": 262,
+	"wcho": 283,
+	"wole": 480,
+	"xpeo": 30,
+	"xsux": 20,
+	"yezi": 192,
+	"yiii": 460,
+	"zanb": 339,
+	"zinh": 994,
+	"zmth": 995,
+	"zsye": 993,
+	"zsym": 996,
+	"zxxx": 997,
+	"zyyy": 998,
+	"zzzz": 999,
+}
+
 type Language struct {
 	Language string
 	Script   string
@@ -733,9 +959,9 @@ func ParseLanguage(s string) (Language, error) {
 	return language, nil
 }
 
-func consumeLanguage(s string) (language, remaining string, consumed bool) {
+func consumeTag(s string) (language, remaining string, consumed bool) {
 	// RFC 5646, 2.1. Syntax
-	for i := 0; i < len(s) && i < 8; i++ {
+	for i := 0; i < len(s); i++ {
 		if !isAlphaChar(s[i]) {
 			if len(s) >= 2 {
 				return strings.ToLower(s[:i]), s[i:], true
@@ -745,51 +971,19 @@ func consumeLanguage(s string) (language, remaining string, consumed bool) {
 		}
 	}
 
-	if len(s) >= 2 {
-		return strings.ToLower(s), "", len(s) >= 2
-	} else {
-		return "", s, false
-	}
-}
-
-func consumeScript(s string) (script, remaining string, consumed bool) {
-	// RFC 5646, 2.1. Syntax
-	for i := 0; i < len(s) && i < 4; i++ {
-		if !isAlphaChar(s[i]) {
-			if len(s) >= 2 {
-				return strings.ToLower(s[:i]), s[i:], true
-			} else {
-				return "", s, false
-			}
-		}
-	}
-
-	if len(s) >= 2 {
-		return strings.ToLower(s), "", true
-	} else {
-		return "", s, false
-	}
-}
-
-func consumeRegion(s string) (region, remaining string, consumed bool) {
-	// RFC 5646, 2.1. Syntax
-	for i := 0; i < len(s) && i < 3; i++ {
-		if !isAlphaChar(s[i]) {
-			return strings.ToLower(s[:i]), s[i:], len(s) > 0
-		}
-	}
-
-	return strings.ToLower(s), "", len(s) > 0
+	return strings.ToLower(s), "", len(s) >= 2
 }
 
 func consumeLanguageTags(s string) (language, script, region, remaining string, consumed bool) {
-	language, s, consumed = consumeLanguage(s)
+	language, s, consumed = consumeTag(s)
 
 	if !consumed {
 		return "", "", "", "", false
 	}
 
-	if len(language) == 2 {
+	if len(language) < 2 {
+		return "", "", "", s, false
+	} else if len(language) == 2 {
 		if _, ok := languageSet1[language]; !ok {
 			return "", "", "", s, false
 		}
@@ -807,19 +1001,31 @@ func consumeLanguageTags(s string) (language, script, region, remaining string, 
 		return "", "", "", "", false
 	}
 
-	/*tag1, s, consumed := consumeTag(s[1:])
+	tag1, s, consumed := consumeTag(s[1:])
+
+	if len(tag1) == 4 {
+		if _, ok := scripts[tag1]; !ok {
+			return "", "", "", s, false
+		} else {
+			script = tag1
+		}
+	} else if len(tag1) == 2 {
+		region = tag1
+	}
 
 	if len(s) == 0 {
-		return language, "", tag1, "", true
+		return language, script, region, s, true
 	}
 
 	if s[0] != '-' {
 		return "", "", "", "", false
 	}
 
-	tag2, s, consumed := consumeTag(s[1:])
+	if len(region) == 0 {
+		region, s, consumed = consumeTag(s[1:])
 
-	return language, tag1, tag2, s, true*/
+		return language, script, region, s, true
+	}
 
-	return "", "", "", "", false
+	return language, script, region, s, true
 }
