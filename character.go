@@ -14,3 +14,11 @@ func isVisibleChar(c byte) bool {
 	// RFC 5234, Appendix B.1. Core Rules
 	return c >= 0x21 && c <= 0x7E
 }
+
+func skipCharacter(s string, c byte) (remaining string, consumed bool) {
+	if len(s) == 0 || s[0] != c {
+		return s, false
+	}
+
+	return s[1:], true
+}

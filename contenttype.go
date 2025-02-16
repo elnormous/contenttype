@@ -302,14 +302,6 @@ func skipWhitespaces(s string) string {
 	return ""
 }
 
-func skipCharacter(s string, c byte) (remaining string, consumed bool) {
-	if len(s) == 0 || s[0] != c {
-		return s, false
-	}
-
-	return s[1:], true
-}
-
 func consumeToken(s string) (token, remaining string, consumed bool) {
 	// RFC 7230, 3.2.6. Field Value Components
 	for i := 0; i < len(s); i++ {
