@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestDigit(t *testing.T) {
+func TestDigitChar(t *testing.T) {
 	testCases := []struct {
 		name   string
 		value  byte
@@ -20,6 +20,7 @@ func TestDigit(t *testing.T) {
 		{name: "Space", value: ' ', result: false},
 		{name: "Slash", value: '/', result: false},
 		{name: "Colon", value: ':', result: false},
+		{name: "NUL", value: 0x00, result: false},
 	}
 
 	for _, testCase := range testCases {
@@ -33,7 +34,7 @@ func TestDigit(t *testing.T) {
 	}
 }
 
-func TestAlpha(t *testing.T) {
+func TestAlphaChar(t *testing.T) {
 	testCases := []struct {
 		name   string
 		value  byte
@@ -56,6 +57,7 @@ func TestAlpha(t *testing.T) {
 		{name: "Bracket", value: '[', result: false},
 		{name: "At", value: '@', result: false},
 		{name: "Grave accent", value: '`', result: false},
+		{name: "NUL", value: 0x00, result: false},
 	}
 
 	for _, testCase := range testCases {
@@ -64,6 +66,36 @@ func TestAlpha(t *testing.T) {
 
 			if result != testCase.result {
 				t.Fatalf("Invalid alpha, got %t, exptected %t for %s", result, testCase.result, string(testCase.value))
+			}
+		})
+	}
+}
+
+func TestVisibleChar(t *testing.T) {
+	testCases := []struct {
+		name   string
+		value  byte
+		result bool
+	}{
+		{name: "Lower-case letter", value: 'a', result: true},
+		{name: "Upper-case letter", value: 'A', result: true},
+		{name: "Exclamation mark", value: '!', result: true},
+		{name: "Underscore", value: '_', result: true},
+		{name: "Digit", value: '0', result: true},
+		{name: "Space", value: ' ', result: false},
+		{name: "NUL", value: 0x00, result: false},
+		{name: "US", value: 0x1F, result: false},
+		{name: "DEL", value: 0x7F, result: false},
+		{name: "Tilde", value: '~', result: true},
+		{name: "Out of ASCII range", value: 0x80, result: false},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result := isVisibleChar(testCase.value)
+
+			if result != testCase.result {
+				t.Fatalf("Invalid visible, got %t, exptected %t for %s", result, testCase.result, string(testCase.value))
 			}
 		})
 	}
