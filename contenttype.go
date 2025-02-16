@@ -262,27 +262,12 @@ func isWhitespaceChar(c byte) bool {
 	return c == 0x09 || c == 0x20 // HTAB or SP
 }
 
-func isDigitChar(c byte) bool {
-	// RFC 5234, Appendix B.1. Core Rules
-	return c >= 0x30 && c <= 0x39
-}
-
-func isAlphaChar(c byte) bool {
-	// RFC 5234, Appendix B.1. Core Rules
-	return (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A)
-}
-
 func isTokenChar(c byte) bool {
 	// RFC 7230, 3.2.6. Field Value Components
 	return c == '!' || c == '#' || c == '$' || c == '%' || c == '&' || c == '\'' || c == '*' ||
 		c == '+' || c == '-' || c == '.' || c == '^' || c == '_' || c == '`' || c == '|' || c == '~' ||
 		isDigitChar(c) ||
 		isAlphaChar(c)
-}
-
-func isVisibleChar(c byte) bool {
-	// RFC 5234, Appendix B.1. Core Rules
-	return c >= 0x21 && c <= 0x7E
 }
 
 func isObsoleteTextChar(c byte) bool {
