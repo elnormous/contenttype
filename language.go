@@ -1465,10 +1465,25 @@ func ParseLanguage(s string) (Language, error) {
 	return language, nil
 }
 
-func consumeTag(s string) (language, remaining string, consumed bool) {
+func consumeLanguageTag(s string) (language, remaining string, consumed bool) {
 	// RFC 5646, 2.1. Syntax
 	for i := 0; i < len(s); i++ {
 		if !isAlphaChar(s[i]) {
+			if len(s) >= 2 {
+				return strings.ToLower(s[:i]), s[i:], true
+			} else {
+				return "", s, false
+			}
+		}
+	}
+
+	return strings.ToLower(s), "", len(s) >= 2
+}
+
+func consumeTag(s string) (language, remaining string, consumed bool) {
+	// RFC 5646, 2.1. Syntax
+	for i := 0; i < len(s); i++ {
+		if !isAlphaChar(s[i]) && !isDigitChar(s[i]) {
 			if len(s) >= 2 {
 				return strings.ToLower(s[:i]), s[i:], true
 			} else {
@@ -1510,7 +1525,7 @@ func isValidCountry(country string) bool {
 }
 
 func consumeLanguageTags(s string) (language, script, region, remaining string, consumed bool) {
-	language, s, consumed = consumeTag(s)
+	language, s, consumed = consumeLanguageTag(s)
 
 	if !consumed {
 		return "", "", "", "", false
